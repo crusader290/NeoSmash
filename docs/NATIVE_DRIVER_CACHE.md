@@ -107,3 +107,11 @@ itself. Bounded copied-save check of `build/ssbu.exe` afterwards
 (`build/single-exe-validation-20261021/`): one slow Present, at the first frame of boot;
 gameplay windows from 50 to 150 s peaked at 17–28 ms; 117 ms at 30–40 s while fighter
 modules loaded for the match.
+
+## Folder renamed to NeoSmash (2026-10-22)
+
+The checkout moved from `...\WindowSmash` to `...\NeoSmash`, a new executable path, so
+`.venv` was recreated (same packages), `build/ssbu.exe` relinked and the driver cache warmed
+again: 65,054 shaders in 26.3 min (`build/logs/native-warm-neosmash-folder.log`). Bounded check
+(`build/neosmash-folder-validation-20261022/`): one slow Present at the first frame of boot,
+3 first-use misses, gameplay windows from 50 to 120 s peaking at 16.7–17.5 ms.
