@@ -2,9 +2,11 @@
 
 [← README](README.md)
 
-## WindowSmash's own source
+## NeoSmash's own source
 
-No project-wide license has been specified for the WindowSmash source outside the separately identified third-party material below.
+NeoSmash is based on [WindowSmash](https://github.com/SNO2207/WindowSmash) by SNO2207, whose static recompiler, runtime, tools and documentation it builds on.
+
+No project-wide license has been specified for the NeoSmash source outside the separately identified third-party material below.
 
 ## libvpx
 
@@ -23,11 +25,11 @@ libopus 1.5.2 (Xiph.Org Foundation and contributors) is included as source in [`
 
 Controller input can use [SDL3](https://www.libsdl.org/) (Simple DirectMedia Layer), copyright Sam Lantinga, under the [zlib license](https://github.com/libsdl-org/SDL/blob/main/LICENSE.txt).
 
-SDL3 is an external dependency: this repository contains no SDL source or binaries. The runtime is compiled against the headers of the official SDL3 Windows development package (`deps/SDL3`, which `Install WindowSmash.bat` downloads from SDL's GitHub releases, or `SSBU_SDL3_DIR`) and loads `SDL3.dll` from the executable's folder at run time. A package that includes `SDL3.dll` should include that package's `LICENSE.txt` too; the local bundler (`tools/bundle_ssbu.py`) adds it as `build/SDL3-LICENSE.txt`.
+SDL3 is an external dependency: this repository contains no SDL source or binaries. The runtime is compiled against the headers of the official SDL3 Windows development package (`deps/SDL3`, which `Install NeoSmash.bat` downloads from SDL's GitHub releases, or `SSBU_SDL3_DIR`) and loads `SDL3.dll` from the executable's folder at run time. A package that includes `SDL3.dll` should include that package's `LICENSE.txt` too; the local bundler (`tools/bundle_ssbu.py`) adds it as `build/SDL3-LICENSE.txt`.
 
 ## Python
 
-`Install WindowSmash.bat` may put a copy of [Python](https://www.python.org/) (the embeddable package from python.org, under the [PSF license](https://docs.python.org/3/license.html)) into `deps/python`, with [pip](https://pip.pypa.io/) and the packages below, when the PC has no Python it can use. Nothing from it is distributed with WindowSmash.
+`Install NeoSmash.bat` may put a copy of [Python](https://www.python.org/) (the embeddable package from python.org, under the [PSF license](https://docs.python.org/3/license.html)) into `deps/python`, with [pip](https://pip.pypa.io/) and the packages below, when the PC has no Python it can use. Nothing from it is distributed with NeoSmash.
 
 ## Other external dependencies
 
@@ -46,4 +48,4 @@ A developer can link their own libopus or libvpx builds instead of the included 
 
 The Git source tree contains no Nintendo game binaries, translated game functions, assets, fonts, keys, firmware or personal saves. Runtime package assets contain the precompiled executable and relocated module images; the original game-data archives, firmware fonts, keys and saves remain separate inputs.
 
-Super Smash Bros. Ultimate and associated names are the property of their respective owners. WindowSmash is an independent project and is not affiliated with Nintendo.
+Super Smash Bros. Ultimate and associated names are the property of their respective owners. NeoSmash is an independent project and is not affiliated with Nintendo.

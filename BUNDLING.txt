@@ -1,4 +1,4 @@
-WINDOWSMASH - LOCAL BUILD PACKAGING
+NEOSMASH - LOCAL BUILD PACKAGING
 
 After a successful build, run Bundle Latest SSBU.bat, or:
   python tools\bundle_ssbu.py --dry-run

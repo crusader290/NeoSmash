@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the game from your own files in one go: what Build WindowSmash.bat runs.
+"""Build the game from your own files in one go: what Build NeoSmash.bat runs.
 
 Usage:
   build_game.py [--game <dir>] [--keys <dir>] [--firmware <dir>] [--jobs N] [--prepare-only]
@@ -152,7 +152,7 @@ def missing_packages(requirements):
 # ---- the steps ------------------------------------------------------------------------------
 def check_tools():
     if sys.version_info < (3, 10):
-        raise Failed(f"this is Python {sys.version.split()[0]}: WindowSmash needs Python 3.10 or newer (setup guide step 3).")
+        raise Failed(f"this is Python {sys.version.split()[0]}: NeoSmash needs Python 3.10 or newer (setup guide step 3).")
     log(f"  Python {sys.version.split()[0]}: {sys.executable}")
     import cc
     clang = cc.CLANG if os.path.isfile(cc.CLANG) else shutil.which(cc.CLANG)
@@ -160,7 +160,7 @@ def check_tools():
         raise Failed("Visual Studio's Clang tools (clang-cl.exe) were not found. Install Visual Studio with "
                      "Desktop development with C++ and C++ Clang tools for Windows (setup guide step 4).")
     # the generated C is compiled long after the build starts: try the compiler, the Windows SDK and the linker now
-    with tempfile.TemporaryDirectory(prefix="windowsmash-check-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="neosmash-check-") as tmp:
         src = os.path.join(tmp, "check.c")
         with open(src, "w") as f:
             f.write("#include <windows.h>\n#include <stdio.h>\n"
@@ -294,9 +294,9 @@ def check_same_game(rec):
         was_display = f.readline().split("\t")[0].strip()
     now = game_identity(rec)
     if was and not same_game(was, now):
-        raise Failed(f"This WindowSmash folder was set up from {describe_identity(was, was_display)}, but the game "
+        raise Failed(f"This NeoSmash folder was set up from {describe_identity(was, was_display)}, but the game "
                      f"folder now has {describe_identity(now, rec['display_version'])} to build from. One folder holds "
-                     "one game version: set up the new one in a new WindowSmash folder, or add it as a version of its "
+                     "one game version: set up the new one in a new NeoSmash folder, or add it as a version of its "
                      "own (docs/VERSIONS.md).")
 
 
@@ -380,7 +380,7 @@ def write_romfs_cfg(game, keys, the_program):
         base = gamefiles.base_program(result["contents"], program)
         if not base:
             raise Failed(f"{gamefiles.where(program)} is the game's update, whose data is a patch over the game's own: "
-                         f"WindowSmash also needs the game itself (its program .nca, or its .nsp) in {game}, next to it.")
+                         f"NeoSmash also needs the game itself (its program .nca, or its .nsp) in {game}, next to it.")
         base_cfg = os.path.join("dump", "modules", "romfs_base.cfg")
         base_ref = nca_ref(base) if base["romfs"] == "plain" else [decrypt_once(base, keys)]
         run([sys.executable, os.path.join("tools", "nca.py"), "romfs-cfg", *base_ref, "--keys", keys, "--out", base_cfg],
@@ -571,12 +571,12 @@ def build(a):
         run([sys.executable, os.path.join("tools", "recomp.py"), "all", os.path.join("dump", "exefs"),
              "--out", "build", "--jobs", str(jobs)],
             "The build failed (see above). If the PC ran out of memory, build with fewer jobs at a time: open "
-            "PowerShell in this folder and run  & \".\\Build WindowSmash.bat\" --jobs 4")
+            "PowerShell in this folder and run  & \".\\Build NeoSmash.bat\" --jobs 4")
     log("\nDone: build\\ssbu.exe is ready. Start the game with Play SSBU.bat.")
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Build the game from your own files (Build WindowSmash.bat).")
+    ap = argparse.ArgumentParser(description="Build the game from your own files (Build NeoSmash.bat).")
     ap.add_argument("--game", help=r"the folder with the game's files (asked; default D:\MyDump)")
     ap.add_argument("--keys", help=r"the folder with prod.keys and title.keys (asked; default D:\MyKeys)")
     ap.add_argument("--firmware", help=r"the folder with the firmware's .nca files (asked; default D:\MyFirmware)")

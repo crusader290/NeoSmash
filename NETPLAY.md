@@ -2,7 +2,7 @@
 
 [← README](README.md) · [Setup guide](docs/BUILDING.md) · [Playing](docs/PLAYING.md) · [Technical guide](docs/TECHNICAL.md)
 
-WindowSmash plays the game's **Local Wireless** mode over the internet. To the game, the other players look like Switches nearby. The game's own **Online** mode works too, for Quickplay against WindowSmash's own game server ([Online mode](#online-mode-quickplay)). Nintendo's online service isn't used.
+NeoSmash plays the game's **Local Wireless** mode over the internet. To the game, the other players look like Switches nearby. The game's own **Online** mode works too, for Quickplay against NeoSmash's own game server ([Online mode](#online-mode-quickplay)). Nintendo's online service isn't used.
 
 > [!NOTE]
 > **Tested so far:** connecting and finding rooms, including the online lobby with several games on one PC, through the public lobby, and between a Windows and a Linux PC. Full matches between two PCs, every DLC fighter online, and every kind of home network haven't been fully verified yet. Online mode is newer still: see [what works](#online-mode-quickplay).
@@ -38,12 +38,12 @@ On Linux ([README-LINUX.md](README-LINUX.md)), `run.sh`, `run-offline.sh`, `host
 
 Whichever way you choose:
 
-1. **Everyone uses the same WindowSmash and the same game version.** A 13.0.5 player can't play with an 11.0.0 player.
+1. **Everyone uses the same NeoSmash and the same game version.** A 13.0.5 player can't play with an 11.0.0 player.
 2. **Every PC is set up with its own game data**, following the [setup guide](docs/BUILDING.md). Match the DLC between players too.
 3. **Every PC keeps its own save and its own `netplay_id.txt`.** Never copy `netplay_id.txt` to another PC: two PCs with the same one look like one player.
 4. **Check the game works offline first** with `Play SSBU Offline.bat`, then close it.
 
-Each WindowSmash window is one player. A private room holds up to eight members, and the game's own room rules decide how many can play a match.
+Each NeoSmash window is one player. A private room holds up to eight members, and the game's own room rules decide how many can play a match.
 
 ## Online lobby
 
@@ -56,7 +56,7 @@ This is what `Play SSBU.bat` does by default. Every Local Wireless room that any
    - **To join:** open **Rooms List** and pick a room. Open rooms come first, fuller ones before emptier ones.
 4. Press <kbd>F1</kbd> to see the connection, for example `Online: 37 players, 4 rooms - you are Alpha, ping 48 ms`. A second line lists the other players in your room and how each one is reached ([see below](#direct-connections-and-your-internet-address)).
 
-`online_server.txt`, in the WindowSmash folder, names the lobby. Its first line that doesn't start with `#` is the lobby's address, `smash.recomps.wtf:39421` (the public lobby) unless you change it. Port 39421 is the lobby with the game server for [Online mode](#online-mode-quickplay); port 39420 is the older lobby without it, which older WindowSmash versions use. Rooms on one don't show up on the other, so everyone in a group should use the same one.
+`online_server.txt`, in the NeoSmash folder, names the lobby. Its first line that doesn't start with `#` is the lobby's address, `smash.recomps.wtf:39421` (the public lobby) unless you change it. Port 39421 is the lobby with the game server for [Online mode](#online-mode-quickplay); port 39420 is the older lobby without it, which older NeoSmash versions use. Rooms on one don't show up on the other, so everyone in a group should use the same one.
 
 ### Friends only: a lobby code
 
@@ -81,7 +81,7 @@ The overlay shows the code after `Online`. A lobby code is not a password: anyon
 
 ## Online mode (Quickplay)
 
-The game's own **Online** menu works with WindowSmash's game server, which runs inside the online lobby. **Quickplay** matches you with other WindowSmash players who are searching at the same time.
+The game's own **Online** menu works with NeoSmash's game server, which runs inside the online lobby. **Quickplay** matches you with other NeoSmash players who are searching at the same time.
 
 > [!WARNING]
 > Online mode is new. Logging in, the Online menus, Quickplay's search, and two players being matched into one room have been tested, on one PC. The matches themselves, more than two players, and results and GSP afterwards haven't been tested yet. The Linux version has Online mode built in, but it hasn't been tried there.
@@ -115,9 +115,9 @@ The overlay's second line shows each player in your room, for example `Room: Bra
 | `relayed (trying direct)` | Still opening a direct path. |
 | `relayed (direct off)` | That player turned direct connections off. |
 | `relayed (direct off here)` | You turned them off. |
-| `relayed (older game)` | That player's WindowSmash is too old for direct connections. |
+| `relayed (older game)` | That player's NeoSmash is too old for direct connections. |
 
-Direct connections need a lobby running this version of `tools/ssbu_relay.py`. With an older lobby, or a player with an older WindowSmash, play goes through the lobby as before.
+Direct connections need a lobby running this version of `tools/ssbu_relay.py`. With an older lobby, or a player with an older NeoSmash, play goes through the lobby as before.
 
 > [!NOTE]
 > **Your internet address.** The players in a room with you learn your internet (IP) address, as they would playing online on a console. The lobby introduces only players whose games are already playing together in a room, and introduces each player in at most 20 rooms an hour.

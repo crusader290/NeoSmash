@@ -12,6 +12,8 @@ import subprocess
 import sys
 import time
 
+# (the embeddable Python keeps a script's own folder off sys.path)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import shader_aot as aot
 
 PROFILE = "link-sephiroth-lylat"

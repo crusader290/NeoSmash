@@ -2,7 +2,7 @@
 
 [← README](../README.md) · [Setup guide](BUILDING.md) · [Multiplayer](../NETPLAY.md) · [DLC and unlocks](DLC-AND-UNLOCKS.md)
 
-Everything about playing once the game is built: how to start it, the controls, the settings files, and where WindowSmash keeps your save, screenshots and problem reports.
+Everything about playing once the game is built: how to start it, the controls, the settings files, and where NeoSmash keeps your save, screenshots and problem reports.
 
 ## Contents
 
@@ -16,7 +16,7 @@ Everything about playing once the game is built: how to start it, the controls, 
 
 ## Starting the game
 
-Everything starts from a launcher in the WindowSmash folder. Double-click the one you want:
+Everything starts from a launcher in the NeoSmash folder. Double-click the one you want:
 
 | Launcher | What it does |
 | :--- | :--- |
@@ -26,9 +26,9 @@ Everything starts from a launcher in the WindowSmash folder. Double-click the on
 | **`Join SSBU Netplay.bat`** | Starts the game and joins someone's private room. |
 | **`Unlock All Fighters.bat`** | Unlocks every base-game fighter on your save. Close the game first ([DLC and unlocks](DLC-AND-UNLOCKS.md#unlock-every-base-game-fighter)). |
 | **`Prepare Shaders.bat`** | Prepares all of the game's shaders ahead of time ([below](#shaders-and-first-time-stutter)). |
-| **`Install WindowSmash.bat`** | Sets everything up and builds the game ([setup guide](BUILDING.md#install-in-one-go)). Run it again to get the newest WindowSmash and build it. |
-| **`Build WindowSmash.bat`** | Builds the game from your files, when the tools are already installed ([setup guide](BUILDING.md#shortcut-build-windowsmashbat)). |
-| **`Configure Game Data.bat`** | Points WindowSmash at your game data and fonts ([setup guide, step 10](BUILDING.md#step-10-connect-your-game-data)). |
+| **`Install NeoSmash.bat`** | Sets everything up and builds the game ([setup guide](BUILDING.md#install-in-one-go)). Run it again to get the newest NeoSmash and build it. |
+| **`Build NeoSmash.bat`** | Builds the game from your files, when the tools are already installed ([setup guide](BUILDING.md#shortcut-build-neosmashbat)). |
+| **`Configure Game Data.bat`** | Points NeoSmash at your game data and fonts ([setup guide, step 10](BUILDING.md#step-10-connect-your-game-data)). |
 
 With [more than one game version](VERSIONS.md) built, the launchers ask which one to start. The last one you picked is the default.
 
@@ -73,14 +73,14 @@ Up to **eight players** can use pads at once: Xbox, PlayStation, Switch Pro, and
 
 - Each pad that connects becomes the **next free player**. A pad that's unplugged and plugged back in gets its player back.
 - Buttons go by **position**, as on a Switch controller. On an Xbox controller, the right-hand button (**B**) is the Switch's **A**, and the bottom one (**A**) is the Switch's **B**.
-- Press <kbd>F2</kbd> in the game to see which pads WindowSmash found and which player each one is.
+- Press <kbd>F2</kbd> in the game to see which pads NeoSmash found and which player each one is.
 
 > [!NOTE]
 > PlayStation, Switch Pro and most other pads need `SDL3.dll` next to `build\ssbu.exe`. [Step 12 of the setup guide](BUILDING.md#step-12-optional-support-more-kinds-of-controllers) adds it. Without it, only Xbox (XInput) pads work, as players 1–4.
 
 ### controllers.ini
 
-The first time the game starts, it writes **`controllers.ini`** into the WindowSmash folder. Open it in Notepad to change how pads work. Every setting is explained inside the file. Changes apply the next time the game starts, and deleting the file brings back the defaults.
+The first time the game starts, it writes **`controllers.ini`** into the NeoSmash folder. Open it in Notepad to change how pads work. Every setting is explained inside the file. Changes apply the next time the game starts, and deleting the file brings back the defaults.
 
 | Setting | What it does | Default |
 | :--- | :--- | :--- |
@@ -127,7 +127,7 @@ The first start also writes **`display.ini`**, which sets how the game starts:
 
 ## Shaders and first-time stutter
 
-The game's graphics programs (*shaders*) are prepared the first time each one is used, so a new effect can show a moment late, or stutter, the first time you see it. WindowSmash keeps prepared shaders in `dump\shadercache\` and loads previously used ones in the background at startup. This reduces repeat compilation, but the graphics driver can still pause when it first uses a new combination of shaders and rendering state. Preparing the cache does not eliminate every stutter.
+The game's graphics programs (*shaders*) are prepared the first time each one is used, so a new effect can show a moment late, or stutter, the first time you see it. NeoSmash keeps prepared shaders in `dump\shadercache\` and loads previously used ones in the background at startup. This reduces repeat compilation, but the graphics driver can still pause when it first uses a new combination of shaders and rendering state. Preparing the cache does not eliminate every stutter.
 
 To prepare the discoverable stored shaders before playing, double-click **`Prepare Shaders.bat`**.
 It scans all regional `.eff`, `.nushdb` and `.arc` shader containers, builds the vertex/pixel
@@ -206,7 +206,7 @@ run `"Unlock All Fighters.bat" -DryRun` in a terminal. Both utility launchers su
 
 ## Where your files are
 
-All of these are in the WindowSmash folder:
+All of these are in the NeoSmash folder:
 
 | What | Where |
 | :--- | :--- |
@@ -223,7 +223,7 @@ All of these are in the WindowSmash folder:
 
 ## Problem reports
 
-When the game crashes, or freezes with no new picture for five seconds, WindowSmash writes a report into the **`reports\`** folder:
+When the game crashes, or freezes with no new picture for five seconds, NeoSmash writes a report into the **`reports\`** folder:
 
 | File | Written when |
 | :--- | :--- |
@@ -236,4 +236,4 @@ When you report a problem, attach the `.txt` report and the end of `build\play.l
 
 If the game doesn't start at all, check, in this order: the game data path ([step 10](BUILDING.md#step-10-connect-your-game-data)), that the game version matches, the six font files, that your processor has AVX2, and your graphics driver.
 
-WindowSmash is experimental. That it starts doesn't mean every fighter, stage, mode or online match works.
+NeoSmash is experimental. That it starts doesn't mean every fighter, stage, mode or online match works.

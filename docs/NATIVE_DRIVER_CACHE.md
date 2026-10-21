@@ -98,7 +98,7 @@ and warms everything again.
 ## Single executable (cleanup, 2026-10-21)
 
 `build/effects/` and the experimental, whole-game and performance launchers were removed.
-`build/ssbu.exe`, the build `Build WindowSmash.bat` produces, now has DXVK beside it, and
+`build/ssbu.exe`, the build `Build NeoSmash.bat` produces, now has DXVK beside it, and
 all play launchers run `tools/play_setup.bat` before starting it. The driver keys its cache
 by path, so the cache was warmed again for `build/ssbu.exe`
 (`build/logs/native-warm-build-ssbu.log`).

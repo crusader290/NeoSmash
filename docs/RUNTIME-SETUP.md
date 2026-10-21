@@ -18,14 +18,14 @@ A package contains no game data, firmware fonts, keys, DLC list, save, debug map
 - A Windows 10 or 11 PC, 64-bit, with a processor that has AVX2, FMA and F16C ([which ones](BUILDING.md#step-1-check-your-pc)).
 - A graphics card or chip with DirectX 11 and a working driver.
 - Your own copy of the game's data at **the game version the package was built for** (the release says which): patched with that update and unencrypted, usually as `romfs.bin`. [Part 2 of the setup guide](BUILDING.md#part-2-gather-your-game-files) explains what that means.
-- The six firmware font files (`.bfttf`). If you only have your firmware's `.nca` files, [step 9 of the setup guide](BUILDING.md#step-9-take-the-fonts-out-of-your-firmware) takes the fonts out; it needs Python and the WindowSmash source.
-- A folder you can write to, such as `C:\WindowSmash` (not `Program Files`).
+- The six firmware font files (`.bfttf`). If you only have your firmware's `.nca` files, [step 9 of the setup guide](BUILDING.md#step-9-take-the-fonts-out-of-your-firmware) takes the fonts out; it needs Python and the NeoSmash source.
+- A folder you can write to, such as `C:\NeoSmash` (not `Program Files`).
 
 ## First-time setup
 
-1. On the release page, download **`WindowSmash-Windows-x64-runtime.zip`**, not the *Source code* archives GitHub adds to every release.
+1. On the release page, download **`NeoSmash-Windows-x64-runtime.zip`**, not the *Source code* archives GitHub adds to every release.
 2. Right-click the ZIP, choose **Properties**, tick **Unblock** at the bottom if it's there, and click **OK**.
-3. Right-click the ZIP, choose **Extract All…**, pick a folder such as `C:\WindowSmash`, and click **Extract**.
+3. Right-click the ZIP, choose **Extract All…**, pick a folder such as `C:\NeoSmash`, and click **Extract**.
 4. Open that folder and double-click **`Configure Game Data.bat`**. If **Windows protected your PC** appears, click **More info**, then **Run anyway**. Then answer its questions:
 
    | It asks for | Type |

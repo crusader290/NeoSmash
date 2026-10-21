@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/windowsmash-banner.svg" alt="WindowSmash" width="100%">
+  <img src="docs/assets/neosmash-banner.svg" alt="WindowSmash" width="100%">
 </p>
 
 <p align="center">

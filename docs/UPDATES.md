@@ -2,7 +2,7 @@
 
 [← README](../README.md) · [Setup guide](BUILDING.md) · [Several versions](VERSIONS.md) · [DLC and unlocks](DLC-AND-UNLOCKS.md) · [Technical guide](TECHNICAL.md)
 
-Your main WindowSmash folder holds the game version you set it up with. WindowSmash can also apply an **update file** from your own dump over that game data and build the result in a folder of its own, so you can keep and play several versions side by side.
+Your main NeoSmash folder holds the game version you set it up with. NeoSmash can also apply an **update file** from your own dump over that game data and build the result in a folder of its own, so you can keep and play several versions side by side.
 
 This has been tested with **13.0.5**, the game's last update, applied over **11.0.0**. Among other things, 13.0.5 adds **Kazuya and Sora** (Challenger Packs 10 and 11). The examples below use it; other updates go the same way.
 
@@ -24,7 +24,7 @@ This has been tested with **13.0.5**, the game's last update, applied over **11.
 
 **Steps:**
 
-1. Open PowerShell in the WindowSmash folder ([how](BUILDING.md#step-6-open-powershell-in-the-windowsmash-folder)).
+1. Open PowerShell in the NeoSmash folder ([how](BUILDING.md#step-6-open-powershell-in-the-neosmash-folder)).
 2. Run this command. Name the folder after the update's version (`--tree v13.0.5`). With no DLC, leave out `--dlc "D:\MyDump\dlc"`, and change `--jobs 8` to the number that fits your PC ([step 14](BUILDING.md#step-14-build-the-game)):
 
    ```powershell
@@ -47,7 +47,7 @@ The first time, the new version gets a **copy** of your main save, which the gam
 
 ## Doing it by hand
 
-`tools/install_version.py` runs the steps below and the build. To run them one at a time instead, from the WindowSmash folder (with 13.0.5 as the example):
+`tools/install_version.py` runs the steps below and the build. To run them one at a time instead, from the NeoSmash folder (with 13.0.5 as the example):
 
 ```powershell
 python tools/update.py apply "D:\MyDump\update.nsp" --base dump/modules/romfs.cfg --keys "D:\MyKeys" --tree v13.0.5

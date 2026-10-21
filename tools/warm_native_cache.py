@@ -23,6 +23,8 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parent.parent
+# (the embeddable Python keeps a script's own folder off sys.path)
+sys.path.insert(0, str(ROOT / "tools"))
 NAME = re.compile(r"v(\d+)_(vs|ps|cs)_[0-9a-f]{16}_[0-9a-f]{8}_[0-9a-f]{16}\.dxbc")
 LISTS = ("startup-selected", "startup-observed", "whole-game")
 
@@ -113,8 +115,7 @@ def main():
     cache = tree / "dump/shadercache"
     state = tree / "dump/effect_profiles/native-warm"
     if not exe.is_file() or not (exe.parent / "d3d11.dll").is_file():
-        raise SystemExit(f"{exe} with DXVK beside it is needed; build the game first (Build WindowSmash.bat) and put DXVK beside it.")
-    sys.path.insert(0, str(tree / "tools"))
+        raise SystemExit(f"{exe} with DXVK beside it is needed; build the game first (Build NeoSmash.bat) and put DXVK beside it.")
     import shader_aot as aot
     names = wanted_names(tree, aot.cache_version())
     if not names:

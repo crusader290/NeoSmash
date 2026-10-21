@@ -2,7 +2,7 @@
 
 [← README](../README.md) · [Setup guide](BUILDING.md) · [Game updates](UPDATES.md) · [Technical guide](TECHNICAL.md)
 
-One WindowSmash folder can hold several versions of the game side by side, each in a folder of its own with its own save. Each is installed and built with one command, and what versions have in common is shared instead of built twice.
+One NeoSmash folder can hold several versions of the game side by side, each in a folder of its own with its own save. Each is installed and built with one command, and what versions have in common is shared instead of built twice.
 
 ## Contents
 
@@ -25,7 +25,7 @@ To skip the question, set `SSBU_TREE` to a version's folder before starting a la
 
 ## Installing a version
 
-One command, from the WindowSmash folder, with your own update file, DLC and keys (example paths):
+One command, from the NeoSmash folder, with your own update file, DLC and keys (example paths):
 
 ```powershell
 python tools/install_version.py install --tree v13.0.5 --update "D:\MyDump\update.nsp" --dlc "D:\MyDump\dlc" --keys "D:\MyKeys"

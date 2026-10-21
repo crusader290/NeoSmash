@@ -6,7 +6,10 @@ of its speculative interface variants can overwhelm startup and continue in play
 import argparse
 from pathlib import Path
 import re
+import sys
 
+# (the embeddable Python keeps a script's own folder off sys.path)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import prepare_effects as effects
 import shader_aot as aot
 

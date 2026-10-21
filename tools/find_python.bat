@@ -1,6 +1,6 @@
 @echo off
-rem Finds the Python that runs WindowSmash's tools, for the launchers: sets PY to it. First the
-rem local virtual environment (.venv), then the one Install WindowSmash.bat set up (deps\python),
+rem Finds the Python that runs NeoSmash's tools, for the launchers: sets PY to it. First the
+rem local virtual environment (.venv), then the one Install NeoSmash.bat set up (deps\python),
 rem then python on the PATH, then the py launcher - the first that is 3.10 or newer.
 rem Run from the port's folder; exits with 1, after
 rem saying what to do, if there is none.
@@ -17,7 +17,7 @@ python -c "import sys; sys.exit(sys.version_info < (3, 10))" >nul 2>&1 && set "P
 if defined PY exit /b 0
 py -3 -c "import sys; sys.exit(sys.version_info < (3, 10))" >nul 2>&1 && set "PY=py -3"
 if defined PY exit /b 0
-echo Python 3.10 or newer was not found. Double-click "Install WindowSmash.bat" to set everything
+echo Python 3.10 or newer was not found. Double-click "Install NeoSmash.bat" to set everything
 echo up, or install Python as the setup guide says ^(docs\BUILDING.md^), with "Add python.exe to
 echo PATH" ticked, then run this again.
 exit /b 1

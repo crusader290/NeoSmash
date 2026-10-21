@@ -34,7 +34,7 @@ The 11.0.0 build extracts and compiles the 96 modules in the game archive's `pre
 Without `aoc.cfg`, the game sees no DLC. To make one from your own DLC files:
 
 1. Put your DLC `.nsp` files in a folder, for example `D:\MyDump\dlc`. (An installed-content folder, such as an emulator's `registered` folder, works too.)
-2. Open PowerShell in the WindowSmash folder ([how](BUILDING.md#step-6-open-powershell-in-the-windowsmash-folder)) and run:
+2. Open PowerShell in the NeoSmash folder ([how](BUILDING.md#step-6-open-powershell-in-the-neosmash-folder)) and run:
 
    ```powershell
    python tools/nca.py aoc-cfg "D:\MyDump\dlc" --keys "D:\MyKeys" --out dump/modules/aoc.cfg
@@ -63,7 +63,7 @@ The game starts with only the original eight fighters unlocked. `Unlock All Figh
 
 1. Start the game once and wait for the main menu, so it creates a save. Then close it.
 2. **Make sure every game window is closed.** The game keeps its save in memory and would overwrite the change.
-3. Double-click **`Unlock All Fighters.bat`** in the WindowSmash folder. With [several versions](VERSIONS.md) built, it asks which one.
+3. Double-click **`Unlock All Fighters.bat`** in the NeoSmash folder. With [several versions](VERSIONS.md) built, it asks which one.
 4. Read what it says. It makes a dated backup of your save in `save_backups\` first: keep it.
 5. Start the game again. Unlock notices appear for the new fighters: skip each with the **X** button (<kbd>C</kbd> on the keyboard).
 
@@ -75,7 +75,7 @@ The tool runs with Windows' built-in PowerShell, so it doesn't need Python. It r
 
 ## Other ways to run the unlock tool
 
-From PowerShell in the WindowSmash folder. `--dry-run` (`-DryRun`) shows what would change without changing anything:
+From PowerShell in the NeoSmash folder. `--dry-run` (`-DryRun`) shows what would change without changing anything:
 
 ```powershell
 python tools/unlock_all.py --dry-run

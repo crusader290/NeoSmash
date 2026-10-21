@@ -1,4 +1,4 @@
-# NeoSmash / WindowSmash handoff context
+# NeoSmash / NeoSmash handoff context
 
 Updated 2026-10-21 (Australia/Brisbane). Read this before changing the renderer.
 
@@ -50,10 +50,10 @@ Run the user's own Super Smash Bros. Ultimate dump on this Windows PC, with SDL3
 controller support and fewer first-use effects freezes. The user reports much better
 play, with some remaining stalls. Stutter elimination is **not** established.
 
-Repository: `H:\Workspace\NeoSmash\WindowSmash`, upstream
-`https://github.com/SNO2207/WindowSmash`. The checkout contains uncommitted source
-changes and important untracked source files. No commit, push or PR was requested.
-Do not reset or clean this working tree. See [MANIFEST.md](MANIFEST.md).
+Repository: `https://github.com/crusader290/NeoSmash` (private; `main`), forked from upstream
+`https://github.com/SNO2207/WindowSmash` (git remote `origin`). All source work is committed
+there; generated artifacts, game data, saves and caches stay local and ignored. Do not reset or
+clean this working tree. See [MANIFEST.md](MANIFEST.md).
 
 Current game: 13.0.3; main build ID
 `730C2141EEBF9885E4857E7E50EAE441D46925DF`. Game inputs are supplied by the user;

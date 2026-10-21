@@ -16,7 +16,7 @@ redistributable game package or a cryptographic integrity manifest.
 | Validation | 53 regression tests passed; all selected entries reflected successfully |
 | Runtime outcome | Root cause: cold driver library compiles. After warming all 65,050, a bounded run and the user's session both had 0 slow Presents (was 10-25 / 26); transition hitches of at most 100 ms remain |
 | Driver cache | 65,050 warmed for `build/ssbu.exe`; keep `%LOCALAPPDATA%\AMD\VkCache` |
-| Constraints | Keep installed driver, original save and caches; no commit, push or PR requested |
+| Constraints | Keep installed driver, original save and caches; source is committed to crusader290/NeoSmash `main` |
 
 Latest user session: 4,620 prepared objects in 1.9 s, 6.1 s worker wait, all 13
 compute preparations passed; 556 object hits / 86 misses, no FXC failures or logged

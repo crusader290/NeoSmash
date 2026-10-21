@@ -1,6 +1,6 @@
 # DLC and fighter unlocks
 
-The full guide is **[docs/DLC-AND-UNLOCKS.md](https://github.com/SNO2207/WindowSmash/blob/main/docs/DLC-AND-UNLOCKS.md)**. In short:
+The full guide is **[docs/DLC-AND-UNLOCKS.md](docs/DLC-AND-UNLOCKS.md)**. In short:
 
 **Unlock every base-game fighter on your save**
 

@@ -5,16 +5,16 @@
 This guide takes you from a fresh download to playing. No programming knowledge is needed.
 
 > [!IMPORTANT]
-> WindowSmash doesn't include the game. You need your own copy of Super Smash Bros. Ultimate, dumped from your own Nintendo Switch, together with your console's keys and firmware. This guide starts once you have those files.
+> NeoSmash doesn't include the game. You need your own copy of Super Smash Bros. Ultimate, dumped from your own Nintendo Switch, together with your console's keys and firmware. This guide starts once you have those files.
 
 ## Install in one go
 
 **What you need:** a Windows 10 or 11 PC (64-bit, a processor with AVX2, 16 GB of RAM is comfortable, about 60 GB free) and your own game files: the game as dumped from your Switch, with its update if you have one, your console's keys (`prod.keys` and `title.keys`) and its firmware. If you have played the game in **yuzu or Ryujinx on this PC, you already have all three**, and the installer finds them by itself. Otherwise, put the game (its `.xci`, `.nsp` or `.nca` files), its update `.nsp` and your DLC `.nsp` files in one folder; [Part 2](#part-2-gather-your-game-files) below says what the files are.
 
-1. On **<https://github.com/SNO2207/WindowSmash>**, click the green **Code** button, then **Download ZIP**. Extract the ZIP somewhere with room, for example to `C:\WindowSmash`. Keep it out of the Desktop and Documents folders: OneDrive may try to upload them, and the finished build is around 30 GB.
-2. Double-click **`Install WindowSmash.bat`** in that folder. Windows asks whether to run it (**The publisher could not be verified**): click **Run**. On some PCs a blue **Windows protected your PC** box comes instead: click **More info**, then **Run anyway**. Windows asks this about anything downloaded that isn't signed; the installer takes that mark off WindowSmash's other files, so it asks only this once.
+1. On **<https://github.com/crusader290/NeoSmash>**, click the green **Code** button, then **Download ZIP**. Extract the ZIP somewhere with room, for example to `C:\NeoSmash`. Keep it out of the Desktop and Documents folders: OneDrive may try to upload them, and the finished build is around 30 GB.
+2. Double-click **`Install NeoSmash.bat`** in that folder. Windows asks whether to run it (**The publisher could not be verified**): click **Run**. On some PCs a blue **Windows protected your PC** box comes instead: click **More info**, then **Run anyway**. Windows asks this about anything downloaded that isn't signed; the installer takes that mark off NeoSmash's other files, so it asks only this once.
 3. A window opens with the folders it found for your game files, keys and firmware, and a line under each saying what is in it. Change a folder with **Browse…** if it is wrong or empty. Type the online name other players will see, and click **Set up and build**.
-4. Wait. The installer gets what is missing (Python, the Visual Studio build tools, SDL3), prepares your game files, and builds the game: **30 minutes to a few hours**, depending on your PC. You can keep using the PC meanwhile. If it stops, run `Install WindowSmash.bat` again: it carries on where it stopped.
+4. Wait. The installer gets what is missing (Python, the Visual Studio build tools, SDL3), prepares your game files, and builds the game: **30 minutes to a few hours**, depending on your PC. You can keep using the PC meanwhile. If it stops, run `Install NeoSmash.bat` again: it carries on where it stopped.
 5. Play: double-click **`Play SSBU.bat`**, or the **Play SSBU** shortcut it put on the desktop.
 
 <details>
@@ -24,17 +24,17 @@ This guide takes you from a fresh download to playing. No programming knowledge 
 
 Each step is skipped when it is already done, so running it again never repeats work:
 
-- **Updates WindowSmash first:** it asks GitHub whether a newer WindowSmash is out than the one in your folder, and if so downloads it and replaces the files that changed, then carries on with the new version. Your game files, settings, save and builds stay as they are, and so does a lobby code you added to `online_server.txt`. A folder made with Git is updated with `git pull` instead, when it is on the `main` branch with no changes of its own.
+- **Updates NeoSmash first:** it asks GitHub whether a newer NeoSmash is out than the one in your folder, and if so downloads it and replaces the files that changed, then carries on with the new version. Your game files, settings, save and builds stay as they are, and so does a lobby code you added to `online_server.txt`. A folder made with Git is updated with `git pull` instead, when it is on the `main` branch with no changes of its own.
 - **Checks the PC:** 64-bit Windows 10 or 11, a processor with AVX2, the installed RAM, and the free space on the drive. A failed check stops with a message saying what is missing.
 - **Python:** uses the Python you have if it is 3.10 or newer, otherwise puts a copy of Python 3.14 into `deps\python`. Nothing else on the PC changes: no PATH, no file associations.
 - **The compiler:** if Visual Studio's Clang tools aren't there, installs the free Visual Studio Build Tools with the C++ workload and Clang through winget, which is part of Windows. That download is a few GB; a progress window shows it. If you already have Visual Studio without them, it adds them to that one instead (Windows asks for administrator rights first). Without winget, it prints the link and the two boxes to tick.
 - **SDL3** for PlayStation, Switch Pro and other controllers, into `deps\SDL3`, from SDL's own releases, checked against the SHA-256 the release lists.
 - **Music and movies:** nothing to download. The codecs (libopus and libvpx) are built from the sources in `third_party` as part of the game build.
 - **Your folders:** suggests yuzu's and Ryujinx's (keys, firmware and installed games), shows what it finds, and remembers your answers. The game's program, data and DLC are taken from there, even when they are still encrypted as the Switch stores them, or when an update sits next to the game.
-- **Afterwards:** writes `online_name.txt`, puts a shortcut on the desktop, adds a Windows Firewall rule for the game if you leave that ticked (it asks for administrator rights once), runs the build ([`Build WindowSmash.bat`](#shortcut-build-windowsmashbat)'s steps), and if ticked starts `Prepare Shaders.bat` in a window of its own.
-- Everything it prints also goes to `install.log` in the WindowSmash folder.
+- **Afterwards:** writes `online_name.txt`, puts a shortcut on the desktop, adds a Windows Firewall rule for the game if you leave that ticked (it asks for administrator rights once), runs the build ([`Build NeoSmash.bat`](#shortcut-build-neosmashbat)'s steps), and if ticked starts `Prepare Shaders.bat` in a window of its own.
+- Everything it prints also goes to `install.log` in the NeoSmash folder.
 
-Options for a PowerShell window: `tools\install_windowsmash.ps1 -DryRun` says what each step would do without doing it; `-NoWizard` asks in the window instead; `-Game`, `-Keys` and `-Firmware` give the folders; `-NoUpdate` skips the update check.
+Options for a PowerShell window: `tools\install_neosmash.ps1 -DryRun` says what each step would do without doing it; `-NoWizard` asks in the window instead; `-Game`, `-Keys` and `-Firmware` give the folders; `-NoUpdate` skips the update check.
 
 </details>
 
@@ -47,7 +47,7 @@ Prefer to do it yourself, or want to know what each step does? The rest of this 
 
 **How long it takes:** about an hour, plus 30 minutes to a few hours while your PC builds the game. You copy each command from this page and paste it into PowerShell.
 
-**Want it done for you?** After step 5, [`Build WindowSmash.bat`](#shortcut-build-windowsmashbat) does steps 7–14 in one go. **Comfortable with a command line?** Skip to the [quick version](#quick-version).
+**Want it done for you?** After step 5, [`Build NeoSmash.bat`](#shortcut-build-neosmashbat) does steps 7–14 in one go. **Comfortable with a command line?** Skip to the [quick version](#quick-version).
 
 ## Contents
 
@@ -56,10 +56,10 @@ Prefer to do it yourself, or want to know what each step does? The rest of this 
 | [**Part 1: Check your PC**](#part-1-check-your-pc) | [1. Check your PC](#step-1-check-your-pc) |
 | [**Part 2: Gather your game files**](#part-2-gather-your-game-files) | [2. Put your game files in three folders](#step-2-put-your-game-files-in-three-folders) |
 | [**Part 3: Install the tools**](#part-3-install-the-tools) | [3. Python](#step-3-install-python) · [4. Visual Studio](#step-4-install-visual-studio) |
-| [**Part 4: Get WindowSmash**](#part-4-get-windowsmash) | [5. Download](#step-5-download-windowsmash) · [Shortcut: one-click build](#shortcut-build-windowsmashbat) · [6. Open PowerShell](#step-6-open-powershell-in-the-windowsmash-folder) · [7. Install the helpers](#step-7-install-windowsmashs-helpers) |
+| [**Part 4: Get NeoSmash**](#part-4-get-neosmash) | [5. Download](#step-5-download-neosmash) · [Shortcut: one-click build](#shortcut-build-neosmashbat) · [6. Open PowerShell](#step-6-open-powershell-in-the-neosmash-folder) · [7. Install the helpers](#step-7-install-neosmashs-helpers) |
 | [**Part 5: Prepare the game**](#part-5-prepare-the-game) | [8. Program](#step-8-copy-the-games-program) · [9. Fonts](#step-9-take-the-fonts-out-of-your-firmware) · [10. Game data](#step-10-connect-your-game-data) · [11. DLC](#step-11-optional-turn-on-your-dlc) · [12. More controllers](#step-12-optional-support-more-kinds-of-controllers) · [13. Fighters](#step-13-take-out-the-fighters) |
 | [**Part 6: Build and play**](#part-6-build-and-play) | [14. Build](#step-14-build-the-game) · [15. Play](#step-15-play) · [16. Shaders](#step-16-optional-prepare-the-shaders) |
-| [**Afterwards**](#afterwards) | [Add another version](#add-another-version) · [Update WindowSmash](#update-windowsmash) · [If something goes wrong](#if-something-goes-wrong) · [Quick version](#quick-version) · [Reference](#reference) |
+| [**Afterwards**](#afterwards) | [Add another version](#add-another-version) · [Update NeoSmash](#update-neosmash) · [If something goes wrong](#if-something-goes-wrong) · [Quick version](#quick-version) · [Reference](#reference) |
 
 ---
 
@@ -75,7 +75,7 @@ Open **Settings → System → About** and check:
 | **Installed RAM** | 16 GB is comfortable. Note the number: [step 14](#step-14-build-the-game) uses it. |
 | **Processor** | One with AVX2: an Intel Core i3, i5, i7 or i9 with a model number of 4000 or higher (for example *i5-4590* or *i7-12700*), an Intel Core Ultra, or any AMD Ryzen. Most Pentium and Celeron processors don't have it. |
 
-You also need **about 60 GB free on drive C:** for WindowSmash, plus about 17 GB wherever your game files go, and a graphics card or chip with DirectX 11 and an up-to-date driver.
+You also need **about 60 GB free on drive C:** for NeoSmash, plus about 17 GB wherever your game files go, and a graphics card or chip with DirectX 11 and an up-to-date driver.
 
 ---
 
@@ -92,17 +92,17 @@ You need these files from your own Switch:
 | **DLC** you own | `.nsp` files | Optional |
 
 > [!NOTE]
-> **Any game version should work.** WindowSmash has been tested with **11.0.0** and **13.0.5**. The program and the data must be the same version. To keep more than one version, set up one with this guide and [add the others](#add-another-version) afterwards.
+> **Any game version should work.** NeoSmash has been tested with **11.0.0** and **13.0.5**. The program and the data must be the same version. To keep more than one version, set up one with this guide and [add the others](#add-another-version) afterwards.
 
 > [!TIP]
-> **With `Install WindowSmash.bat` or `Build WindowSmash.bat` you don't need `romfs.bin`.** Put the game (a game card dump `.xci`, an `.nsp`, or its `.nca` files; or point at the folder yuzu or Ryujinx installed it in), your update's `.nsp` if you have one, and your DLC `.nsp` files (loose, or in a `dlc` folder) into one folder. They find the program, decrypt what needs it, and apply the update over the game themselves. Decrypting the game needs about 15 GB more space and the update about 4 GB; both take a few minutes. The game as first released (version 1.0.0) is the best base for an update: it applies exactly.
+> **With `Install NeoSmash.bat` or `Build NeoSmash.bat` you don't need `romfs.bin`.** Put the game (a game card dump `.xci`, an `.nsp`, or its `.nca` files; or point at the folder yuzu or Ryujinx installed it in), your update's `.nsp` if you have one, and your DLC `.nsp` files (loose, or in a `dlc` folder) into one folder. They find the program, decrypt what needs it, and apply the update over the game themselves. Decrypting the game needs about 15 GB more space and the update about 4 GB; both take a few minutes. The game as first released (version 1.0.0) is the best base for an update: it applies exactly.
 
 <details>
 <summary><strong>What do "update applied" and "unencrypted" mean?</strong></summary>
 
 <br>
 
-The game's data comes in two parts: the game as it was first sold, and the update that changes it. WindowSmash needs the two already combined into one file. It reads that file directly while you play, so it has to be in its plain, unencrypted form.
+The game's data comes in two parts: the game as it was first sold, and the update that changes it. NeoSmash needs the two already combined into one file. It reads that file directly while you play, so it has to be in its plain, unencrypted form.
 
 Tools that unpack Switch games can make this file. For example, hactool's `--basenca` option combines the base game with the update's Program NCA, and its `--romfs` option writes the result as `romfs.bin`. If your copy of the game already has the update merged in, its Program NCA is the program file, and the data is inside it as well.
 
@@ -133,7 +133,7 @@ This guide keeps your game files in three folders. Create them and copy your fil
 
 ## Part 3: Install the tools
 
-WindowSmash needs two free tools: **Python**, which runs its helper programs, and **Visual Studio**, which builds the game.
+NeoSmash needs two free tools: **Python**, which runs its helper programs, and **Visual Studio**, which builds the game.
 
 ### Step 3: Install Python
 
@@ -153,7 +153,7 @@ It should answer `Python 3.` followed by a version of 3.10 or higher.
 
 ### Step 4: Install Visual Studio
 
-Visual Studio is Microsoft's free toolbox for building programs. You won't need to open it: WindowSmash only uses the tools it installs.
+Visual Studio is Microsoft's free toolbox for building programs. You won't need to open it: NeoSmash only uses the tools it installs.
 
 1. Go to **<https://visualstudio.microsoft.com/downloads/>** and download **Community** (*Free download*).
 2. Run it. On the **Workloads** tab, tick **Desktop development with C++**.
@@ -165,16 +165,16 @@ Visual Studio is Microsoft's free toolbox for building programs. You won't need 
 
 ---
 
-## Part 4: Get WindowSmash
+## Part 4: Get NeoSmash
 
-### Step 5: Download WindowSmash
+### Step 5: Download NeoSmash
 
-1. On **<https://github.com/SNO2207/WindowSmash>**, click the green **Code** button, then **Download ZIP**.
-2. Before extracting, right-click `WindowSmash-main.zip`, choose **Properties**, tick **Unblock** at the bottom if it's there, and click **OK**. This stops Windows from warning about every file inside.
-3. Extract the ZIP to `C:\` (right-click → **Extract All…**), then rename the folder `C:\WindowSmash-main` to **`C:\WindowSmash`**.
+1. On **<https://github.com/crusader290/NeoSmash>**, click the green **Code** button, then **Download ZIP**.
+2. Before extracting, right-click `NeoSmash-main.zip`, choose **Properties**, tick **Unblock** at the bottom if it's there, and click **OK**. This stops Windows from warning about every file inside.
+3. Extract the ZIP to `C:\` (right-click → **Extract All…**), then rename the folder `C:\NeoSmash-main` to **`C:\NeoSmash`**.
 
 > [!TIP]
-> Keep WindowSmash out of the Desktop and Documents folders: OneDrive may try to upload them, and the finished build is around 30 GB.
+> Keep NeoSmash out of the Desktop and Documents folders: OneDrive may try to upload them, and the finished build is around 30 GB.
 
 <details>
 <summary><strong>Prefer Git?</strong></summary>
@@ -184,30 +184,30 @@ Visual Studio is Microsoft's free toolbox for building programs. You won't need 
 With [Git for Windows](https://git-scm.com/download/win) installed, this does the same and makes updating easier later (`git pull`):
 
 ```powershell
-git clone https://github.com/SNO2207/WindowSmash.git C:\WindowSmash
+git clone https://github.com/crusader290/NeoSmash.git C:\NeoSmash
 ```
 
 </details>
 
-### Shortcut: Build WindowSmash.bat
+### Shortcut: Build NeoSmash.bat
 
-Once steps 1–5 are done, **`Build WindowSmash.bat`** can do steps 7 to 14 for you in one go:
+Once steps 1–5 are done, **`Build NeoSmash.bat`** can do steps 7 to 14 for you in one go:
 
 1. If you want PlayStation, Switch Pro and other controllers, do [step 12](#step-12-optional-support-more-kinds-of-controllers) first.
-2. Double-click **`Build WindowSmash.bat`** in `C:\WindowSmash`.
+2. Double-click **`Build NeoSmash.bat`** in `C:\NeoSmash`.
 3. It asks for the folders with your game files, keys and firmware. Press <kbd>Enter</kbd> to accept `D:\MyDump`, `D:\MyKeys` and `D:\MyFirmware`, or type your own. It remembers the answers for next time.
 4. It finds the program file by itself (no need to rename it), copies the fonts, connects your `romfs.bin` (or a decrypted program `.nca`), turns on your DLC if `D:\MyDump\dlc` exists, takes out the fighters, and builds with a `--jobs` number that fits your RAM.
 5. If it stops with a message, fix that ([If something goes wrong](#if-something-goes-wrong) can help) and run it again: it skips whatever is already done.
 
 When it's finished, go to [step 15](#step-15-play). Steps 6–14 below do the same by hand.
 
-### Step 6: Open PowerShell in the WindowSmash folder
+### Step 6: Open PowerShell in the NeoSmash folder
 
-Open `C:\WindowSmash` in File Explorer, click the **address bar** at the top, type `powershell` and press <kbd>Enter</kbd>. A PowerShell window opens that is already in the right folder: its last line reads `PS C:\WindowSmash>`. Use this window for the rest of the guide.
+Open `C:\NeoSmash` in File Explorer, click the **address bar** at the top, type `powershell` and press <kbd>Enter</kbd>. A PowerShell window opens that is already in the right folder: its last line reads `PS C:\NeoSmash>`. Use this window for the rest of the guide.
 
-**Running the commands:** copy each command from this page, paste it into PowerShell with <kbd>Ctrl</kbd>+<kbd>V</kbd>, and press <kbd>Enter</kbd>. Wait until the `PS C:\WindowSmash>` line comes back before the next one. If a command prints an error, look it up in [If something goes wrong](#if-something-goes-wrong) before going on.
+**Running the commands:** copy each command from this page, paste it into PowerShell with <kbd>Ctrl</kbd>+<kbd>V</kbd>, and press <kbd>Enter</kbd>. Wait until the `PS C:\NeoSmash>` line comes back before the next one. If a command prints an error, look it up in [If something goes wrong](#if-something-goes-wrong) before going on.
 
-### Step 7: Install WindowSmash's helpers
+### Step 7: Install NeoSmash's helpers
 
 ```powershell
 python -m pip install -r requirements.txt
@@ -231,7 +231,7 @@ Get-ChildItem D:\MyDump\*.nca | ForEach-Object { "$($_.Name)  $(python tools/nca
 
 The program is the line that says `type=Program`. If two lines say it, choose the one whose `title_id` ends in `800`: that's the update's program. Rename that file to `program.nca`.
 
-**Copy the program** into WindowSmash:
+**Copy the program** into NeoSmash:
 
 ```powershell
 python tools/nca.py exefs "D:\MyDump\program.nca" --keys "D:\MyKeys" --out dump/exefs
@@ -260,7 +260,7 @@ nintendo_ext_003.bfttf
 
 ### Step 10: Connect your game data
 
-Double-click **`Configure Game Data.bat`** in `C:\WindowSmash`. (If **Windows protected your PC** appears, click **More info**, then **Run anyway**.) Answer its questions:
+Double-click **`Configure Game Data.bat`** in `C:\NeoSmash`. (If **Windows protected your PC** appears, click **More info**, then **Run anyway**.) Answer its questions:
 
 | It asks for | Answer |
 | :--- | :--- |
@@ -278,7 +278,7 @@ If it says `No unencrypted RomFS header at this offset`, your `romfs.bin` is sti
 
 <br>
 
-Skip `Configure Game Data.bat` and run these two commands instead. The first points WindowSmash at the data inside your program file; the second copies the fonts.
+Skip `Configure Game Data.bat` and run these two commands instead. The first points NeoSmash at the data inside your program file; the second copies the fonts.
 
 ```powershell
 python tools/nca.py romfs-cfg "D:\MyDump\program.nca" --keys "D:\MyKeys" --out dump/modules/romfs.cfg
@@ -307,8 +307,8 @@ It answers `wrote dump/modules/aoc.cfg:` and how many add-ons it found. Which DL
 Xbox controllers and the keyboard work without this. PlayStation, Switch Pro and most other controllers need the free **SDL3** library:
 
 1. On **<https://github.com/libsdl-org/SDL/releases>**, find the newest release whose number starts with **3** and download **`SDL3-devel-…-VC.zip`** from its **Assets** (the `-VC.zip`, not `-mingw`).
-2. Extract it into a new folder `C:\WindowSmash\deps`.
-3. Rename the extracted folder (named like `SDL3-3.2.24`) to **`SDL3`**, so that `C:\WindowSmash\deps\SDL3` holds `include`, `lib` and `LICENSE.txt`.
+2. Extract it into a new folder `C:\NeoSmash\deps`.
+3. Rename the extracted folder (named like `SDL3-3.2.24`) to **`SDL3`**, so that `C:\NeoSmash\deps\SDL3` holds `include`, `lib` and `LICENSE.txt`.
 
 Do this before step 14. If you add it later, run [step 14](#step-14-build-the-game) again; it's quick the second time.
 
@@ -350,14 +350,14 @@ python tools/recomp.py all dump/exefs --out build --jobs 16
 
 - It takes **30 minutes to a few hours**, and prints a lot while it works. The PC can be slow meanwhile.
 - If it's interrupted (a restart, the PC going to sleep), run the same command again: it carries on where it stopped.
-- It's finished when a line says `linked … objects into build\ssbu.exe` and the `PS C:\WindowSmash>` line comes back.
+- It's finished when a line says `linked … objects into build\ssbu.exe` and the `PS C:\NeoSmash>` line comes back.
 
 > [!TIP]
 > Set the PC not to sleep while plugged in (**Settings → System → Power**) until the build is done.
 
 ### Step 15: Play
 
-Double-click **`Play SSBU.bat`** in `C:\WindowSmash`.
+Double-click **`Play SSBU.bat`** in `C:\NeoSmash`.
 
 - The first time, it asks for **your online name**, the name other players see. Press <kbd>Enter</kbd> to keep the suggested one.
 - If Windows Security asks whether to allow `ssbu.exe` on networks, allow it; it's needed for playing online.
@@ -396,23 +396,23 @@ python tools/install_version.py install --tree v13.0.5 --update "D:\MyDump\updat
 
 From then on, `Play SSBU.bat` asks which version to start. Every player in a multiplayer game needs the same version. The [game updates guide](UPDATES.md) has the details.
 
-### Update WindowSmash
+### Update NeoSmash
 
-Double-click **`Install WindowSmash.bat`** again. It downloads the newest WindowSmash from GitHub if there is one, replaces the files that changed, and builds again, which takes minutes rather than hours. Your game files, settings, save and a lobby code in `online_server.txt` stay as they are.
+Double-click **`Install NeoSmash.bat`** again. It downloads the newest NeoSmash from GitHub if there is one, replaces the files that changed, and builds again, which takes minutes rather than hours. Your game files, settings, save and a lobby code in `online_server.txt` stay as they are.
 
-By hand: download the ZIP again, unblock it as in [step 5](#step-5-download-windowsmash), and copy the contents of its `WindowSmash-main` folder over `C:\WindowSmash`, replacing the files. Then build again ([step 14](#step-14-build-the-game), or double-click `Build WindowSmash.bat`). With Git, run `git pull` instead of downloading.
+By hand: download the ZIP again, unblock it as in [step 5](#step-5-download-neosmash), and copy the contents of its `NeoSmash-main` folder over `C:\NeoSmash`, replacing the files. Then build again ([step 14](#step-14-build-the-game), or double-click `Build NeoSmash.bat`). With Git, run `git pull` instead of downloading.
 
 ### If something goes wrong
 
 | What you see | What to do |
 | :--- | :--- |
-| `Install WindowSmash.bat` stops at a check | It says what the PC lacks: 64-bit Windows 10 or 11, a processor with AVX2, 8 GB of RAM, or free space (about 60 GB, less what is built already). Free some space or move WindowSmash to a drive with room, then run it again. |
-| `Install WindowSmash.bat` says winget is not available | Install the compiler by hand: download the **Build Tools for Visual Studio** from <https://visualstudio.microsoft.com/visual-cpp-build-tools/>, tick **Desktop development with C++** and, under Installation details, **C++ Clang tools for Windows**, install, then run `Install WindowSmash.bat` again. |
+| `Install NeoSmash.bat` stops at a check | It says what the PC lacks: 64-bit Windows 10 or 11, a processor with AVX2, 8 GB of RAM, or free space (about 60 GB, less what is built already). Free some space or move NeoSmash to a drive with room, then run it again. |
+| `Install NeoSmash.bat` says winget is not available | Install the compiler by hand: download the **Build Tools for Visual Studio** from <https://visualstudio.microsoft.com/visual-cpp-build-tools/>, tick **Desktop development with C++** and, under Installation details, **C++ Clang tools for Windows**, install, then run `Install NeoSmash.bat` again. |
 | The installer's window says a folder has a problem | The line under the folder says what: no `prod.keys`, no `.nca` files, no program among the game files. Point it at the right folder ([Part 2](#part-2-gather-your-game-files)) and click **Check files**. |
 | `is the game's update, whose data is a patch over the game's own` | Your folder has the update but not the game itself. Put the game's own (base) program `.nca` next to it; from yuzu or Ryujinx, the installed-content folder has both. |
-| `python` is not recognized, or *Python was not found* | Python isn't installed, or **Add python.exe to PATH** wasn't ticked. Install it again ([step 3](#step-3-install-python)), then open a new PowerShell window. Or double-click `Install WindowSmash.bat`, which brings its own. |
-| `No module named 'Cryptodome'` or `No module named 'zstandard'` | Run [step 7](#step-7-install-windowsmashs-helpers) (with the same Python as the failing command). |
-| **Windows protected your PC**, or **The publisher could not be verified** | Click **More info**, then **Run anyway** (or **Run**). Unblocking the ZIP first ([step 5](#step-5-download-windowsmash)) prevents it; `Install WindowSmash.bat` unblocks the rest of the folder itself. |
+| `python` is not recognized, or *Python was not found* | Python isn't installed, or **Add python.exe to PATH** wasn't ticked. Install it again ([step 3](#step-3-install-python)), then open a new PowerShell window. Or double-click `Install NeoSmash.bat`, which brings its own. |
+| `No module named 'Cryptodome'` or `No module named 'zstandard'` | Run [step 7](#step-7-install-neosmashs-helpers) (with the same Python as the failing command). |
+| **Windows protected your PC**, or **The publisher could not be verified** | Click **More info**, then **Run anyway** (or **Run**). Unblocking the ZIP first ([step 5](#step-5-download-neosmash)) prevents it; `Install NeoSmash.bat` unblocks the rest of the folder itself. |
 | `Cannot find path 'D:\MyDump…'` or `No such file or directory` | A file or folder isn't where the command expects it. Check the names from [step 2](#step-2-put-your-game-files-in-three-folders), including the ending (`program.nca`). No D: drive? Change `D:\` to `C:\` in the command. |
 | `bad header_key?`, `missing title key` or `missing key_area_key` | Your keys are missing or too old. Check that `prod.keys` and `title.keys` are in `D:\MyKeys`, dumped from your Switch after its latest system update. |
 | `not a PFS0 … wrong key?` in step 8 | That `.nca` probably isn't the program. Find the right one with the first command of [step 8](#step-8-copy-the-games-program). |
@@ -422,18 +422,18 @@ By hand: download the ZIP again, unblock it as in [step 5](#step-5-download-wind
 | `The system cannot find the file specified`, or `clang-cl` in an error, when the build starts | Visual Studio's Clang tools are missing. Add them ([step 4](#step-4-install-visual-studio), tip at the end). |
 | The build says `FAILED`, or the PC runs out of memory | Run the build again with a smaller `--jobs` number, such as `--jobs 4`. |
 | `No game version is built here yet` when starting the game | The build hasn't finished. Run [step 14](#step-14-build-the-game) again. |
-| The game closes, or stays black | Look at the end of `C:\WindowSmash\build\play.log` and in the `reports` folder. [Getting help](../README.md#getting-help) says what to send. |
-| No music, or movies don't play | The build was made before the codecs came with WindowSmash. Download the newest WindowSmash and build again ([Update WindowSmash](#update-windowsmash)); see [Audio and video codecs](#audio-and-video-codecs). |
+| The game closes, or stays black | Look at the end of `C:\NeoSmash\build\play.log` and in the `reports` folder. [Getting help](../README.md#getting-help) says what to send. |
+| No music, or movies don't play | The build was made before the codecs came with NeoSmash. Download the newest NeoSmash and build again ([Update NeoSmash](#update-neosmash)); see [Audio and video codecs](#audio-and-video-codecs). |
 | A controller does nothing | Press <kbd>F2</kbd> in the game to see which pads it found. Anything other than an Xbox pad needs [step 12](#step-12-optional-support-more-kinds-of-controllers), then step 14 again. |
 | Effects stutter the first time | That's shaders being prepared. [Step 16](#step-16-optional-prepare-the-shaders) does them all ahead of time. |
 
 ### Quick version
 
-The example paths are your game files in `D:\MyDump`, your keys in `D:\MyKeys` and your firmware in `D:\MyFirmware`; `python` must be 3.10 or newer. (`Build WindowSmash.bat` does the same from `python -m pip` on, and takes an emulator's installed-content folder as the game folder.)
+The example paths are your game files in `D:\MyDump`, your keys in `D:\MyKeys` and your firmware in `D:\MyFirmware`; `python` must be 3.10 or newer. (`Build NeoSmash.bat` does the same from `python -m pip` on, and takes an emulator's installed-content folder as the game folder.)
 
 ```powershell
-git clone https://github.com/SNO2207/WindowSmash.git
-cd WindowSmash
+git clone https://github.com/crusader290/NeoSmash.git
+cd NeoSmash
 python -m pip install -r requirements.txt
 python tools/nca.py exefs "D:\MyDump\program.nca" --keys "D:\MyKeys" --out dump/exefs
 Get-ChildItem D:\MyFirmware\*.nca | ForEach-Object { python tools/nca.py romfs-get $_.FullName --keys D:\MyKeys --match .bfttf --flat --out D:\MyDump\fonts 2>$null }
@@ -455,12 +455,12 @@ python tools/recomp.py all dump/exefs --out build --jobs 16
 | Operating system | Windows 10 or 11, 64-bit. |
 | CPU | x64 with AVX2, FMA and F16C. |
 | Graphics | A Direct3D 11 GPU and a working driver. |
-| Python | **3.10 or newer**, with the packages from `requirements.txt` (`pycryptodomex`, and `zstandard` on Pythons before 3.14, which has `compression.zstd` built in). `Install WindowSmash.bat` puts a copy of 3.14 into `deps/python` when there is none. |
+| Python | **3.10 or newer**, with the packages from `requirements.txt` (`pycryptodomex`, and `zstandard` on Pythons before 3.14, which has `compression.zstd` built in). `Install NeoSmash.bat` puts a copy of 3.14 into `deps/python` when there is none. |
 | C toolchain | Visual Studio 2022 or newer, or its Build Tools, with **Desktop development with C++** (which includes a Windows SDK) and **C++ Clang tools for Windows**. `tools/cc.py` finds Visual Studio's `clang-cl`; set `SSBU_CLANG` to use another. |
 | Game inputs | Any version (tested: 11.0.0 and 13.0.5): the matching ExeFS (from the Program NCA), an unencrypted RomFS with the update applied, and six firmware fonts. Keys for reading packages. |
 | Disk space | About 17 GB for the game data, which stays where it is, and around 30 GB for `build/`. A local bundle needs more. |
 
-To keep WindowSmash's Python packages apart from others, use a virtual environment:
+To keep NeoSmash's Python packages apart from others, use a virtual environment:
 
 ```powershell
 py -3.14 -m venv .venv
@@ -471,7 +471,7 @@ python -m pip install -r requirements.txt
 ### Folder layout
 
 ```text
-WindowSmash/
+NeoSmash/
   runtime/                    the Windows runtime (source)
   tools/                      the recompiler and helper tools (source)
   dump/
@@ -484,7 +484,7 @@ WindowSmash/
     shadercache/              compiled shaders, made while playing
   deps/
     SDL3/                     optional: SDL3's Windows development package (step 12)
-    python/                   optional: the Python Install WindowSmash.bat set up
+    python/                   optional: the Python Install NeoSmash.bat set up
   third_party/                the music and movie codecs' sources (libopus, libvpx)
   build/                      generated C, objects, ssbu.exe, play.log (step 14)
     codecs/                   the codec libraries, built from third_party
@@ -519,7 +519,7 @@ python tools/nca.py romfs-get "D:\MyFirmware\font-archive.nca" --keys "D:\MyKeys
 
 ### Audio and video codecs
 
-The game's music is Opus, and its movies are VP9. Their decoders, libopus and libvpx's VP9 decoder, come with WindowSmash as source in `third_party/` and are compiled into the game by the build (`tools/codec_libs.py`, a few seconds the first time): nothing to install. [`third_party/README.md`](../third_party/README.md) says which upstream versions and files they are.
+The game's music is Opus, and its movies are VP9. Their decoders, libopus and libvpx's VP9 decoder, come with NeoSmash as source in `third_party/` and are compiled into the game by the build (`tools/codec_libs.py`, a few seconds the first time): nothing to install. [`third_party/README.md`](../third_party/README.md) says which upstream versions and files they are.
 
 To link your own builds of them instead, set these before the build command, in the same PowerShell window:
 

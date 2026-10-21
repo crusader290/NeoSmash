@@ -1,4 +1,4 @@
-# NeoSmash / WindowSmash — local Windows build
+# NeoSmash / NeoSmash — local Windows build
 
 This checkout builds the user's own Super Smash Bros. Ultimate dump as a Windows
 program. The current installation is **13.0.3**. It renders through DXVK, with the GPU
@@ -24,7 +24,7 @@ The game's log is `build/play.log`.
 | Netplay with friends | `Host SSBU Netplay.bat`, `Join SSBU Netplay.bat` ([NETPLAY.md](NETPLAY.md)) |
 | Compile all game shaders (once per game version) | `Prepare Shaders.bat` |
 | Unlock base fighters, with a backup | `Unlock All Fighters.bat`, while the game is closed |
-| Set up, build, bundle | `Install WindowSmash.bat`, `Build WindowSmash.bat`, `Configure Game Data.bat`, `Bundle Latest SSBU.bat` |
+| Set up, build, bundle | `Install NeoSmash.bat`, `Build NeoSmash.bat`, `Configure Game Data.bat`, `Bundle Latest SSBU.bat` |
 | Controls, display settings, save locations | [Playing guide](docs/PLAYING.md) |
 | Fresh source build | [Build guide](docs/BUILDING.md) |
 
@@ -50,9 +50,9 @@ driver warm-up.
 
 ## Develop and continue
 
-Use the local `.venv\Scripts\python.exe` and Visual Studio clang-cl. The repository
-contains generated game objects, local dependencies and uncommitted/untracked source
-changes; **do not reset, clean or delete the cache** to start a handoff. Build and test
+Use the local `.venv\Scripts\python.exe` and Visual Studio clang-cl. The folder
+also holds generated game objects, local dependencies and caches that Git ignores;
+**do not reset, clean or delete the cache** to start a handoff. Build and test
 commands, machine constraints and next investigations are in the project context.
 
 Preserve original saves. Use a copied save and a bounded run for renderer tests.
