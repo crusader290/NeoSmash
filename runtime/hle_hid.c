@@ -57,7 +57,16 @@ static u64 scripted_buttons(i32 *lx, i32 *ly) {
             if (*s == ',') s++;
         }
     }
-    double now = rt_now_ns() / 1e9;
+    /* Diagnostic-only: long GPU preparation must not consume all menu inputs
+     * before the game's first input poll. Preserve boot-relative scripts by default. */
+    static u64 script_origin;
+    static int script_relative = -1;
+    u64 current_time = rt_now_ns();
+    if (script_relative < 0) {
+        script_relative = getenv("SSBU_INPUT_RELATIVE") && atoi(getenv("SSBU_INPUT_RELATIVE"));
+        script_origin = current_time;
+    }
+    double now = (current_time - (script_relative ? script_origin : 0)) / 1e9;
     u64 buttons = 0;
     for (int i = 0; i < count; i++) {
         if (now < presses[i].at || now >= presses[i].at + presses[i].hold) continue;

@@ -1,9 +1,14 @@
 @echo off
 rem Finds the Python that runs WindowSmash's tools, for the launchers: sets PY to it. First the
-rem one Install WindowSmash.bat set up (deps\python), then python on the PATH, then the py
-rem launcher - the first that is 3.10 or newer. Run from the port's folder; exits with 1, after
+rem local virtual environment (.venv), then the one Install WindowSmash.bat set up (deps\python),
+rem then python on the PATH, then the py launcher - the first that is 3.10 or newer.
+rem Run from the port's folder; exits with 1, after
 rem saying what to do, if there is none.
 set "PY="
+if exist ".venv\Scripts\python.exe" (
+    set "PY=.venv\Scripts\python.exe"
+    exit /b 0
+)
 if exist "deps\python\python.exe" (
     set "PY=deps\python\python.exe"
     exit /b 0

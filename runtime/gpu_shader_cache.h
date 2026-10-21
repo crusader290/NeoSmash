@@ -16,6 +16,27 @@
 #define SHADER_CACHE_UNPLAYED 0x01C07385C89DC000ull   /* FILETIME 2001-01-01 */
 #define SHADER_CACHE_PLAYED   0x01C1925741648000ull   /* written after 2002-01-01: the game used it */
 
+/* SPH v3: type/stage must agree, and the pixel output word has only sample-mask/depth
+ * flags. The other 30 bits are reserved (NVIDIA's Shader Program Header specification).
+ * Archive scans can otherwise mistake compressed/texture data for shader programs. */
+static inline int shader_program_header_valid(const u8 *program, u32 size) {
+    if (size < 0x50) return 0;
+    u32 first, last;
+    memcpy(&first, program, sizeof first);
+    memcpy(&last, program + 0x4C, sizeof last);
+    u32 type = first & 31, version = (first >> 5) & 31, stage = (first >> 10) & 15, sass = (first >> 17) & 15;
+    if (version != 3 || sass != 3) return 0;
+    u32 word3, word4, word5;
+    memcpy(&word3, program + 12, sizeof word3);
+    memcpy(&word4, program + 16, sizeof word4);
+    memcpy(&word5, program + 20, sizeof word5);
+    /* Common words / ImapSystemValuesA reserved fields. Bit 25 is used by
+     * valid Maxwell programs in the game and must remain accepted. */
+    if ((first & 0x01E00000u) || (word3 & 0xF0000000u) ||
+        (word4 & 0x00F00000u) || (word5 & 0x00FFFC0Fu)) return 0;
+    return type == 1 && stage == 1 ? 1 : type == 2 && stage == 5 && !(last & 0xFFFFFFFCu);
+}
+
 /* FNV-1a over a program's bytes (a vertex or pixel program: its header and code). */
 static inline u64 shader_program_hash(const u8 *p, u32 size) {
     u64 h = 1469598103934665603ull;

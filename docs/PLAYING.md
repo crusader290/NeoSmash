@@ -119,7 +119,7 @@ The first start also writes **`display.ini`**, which sets how the game starts:
 | :--- | :--- | :--- |
 | `window` | `windowed`: a window that keeps 16:9 as you resize it. `borderless`: covers its whole monitor. `fullscreen`: borderless and always on top; the monitor keeps its resolution. | `windowed` |
 | `width`, `height` | The window's inside size at 100% display scaling. | `1280`, `720` |
-| `pacing` | `clock`: a steady 60 frames a second. `vrr`: for G-Sync or FreeSync monitors, each frame shown as soon as it's ready; best with `borderless`. `display`: follows a 60, 120 or 240 Hz monitor's own refresh. | `clock` |
+| `pacing` | `clock`: a steady 60 frames a second. `vrr`: for G-Sync or FreeSync monitors, each frame shown as soon as it's ready; best with `borderless`. `display`: follows a 60, 120, 180 or 240 Hz monitor's own refresh. | `clock` |
 | `latency` | How many frames the graphics card may work ahead, 1–3. Lower is more responsive. | `3` |
 | `hide_cursor` | `1` hides the mouse pointer after two seconds without movement. | `1` |
 
@@ -127,9 +127,82 @@ The first start also writes **`display.ini`**, which sets how the game starts:
 
 ## Shaders and first-time stutter
 
-The game's graphics programs (*shaders*) are prepared the first time each one is used, so a new effect can show a moment late, or stutter, the first time you see it. WindowSmash keeps every prepared shader in `dump\shadercache\` and loads them in the background each time the game starts, so each stutter happens only once.
+The game's graphics programs (*shaders*) are prepared the first time each one is used, so a new effect can show a moment late, or stutter, the first time you see it. WindowSmash keeps prepared shaders in `dump\shadercache\` and loads previously used ones in the background at startup. This reduces repeat compilation, but the graphics driver can still pause when it first uses a new combination of shaders and rendering state. Preparing the cache does not eliminate every stutter.
 
-To prepare them all before playing, double-click **`Prepare Shaders.bat`**. It runs once per game version, at low priority so the PC stays usable, and shows a progress bar with the time left. A first run compiles about 40,000 shaders (for 13.0.5): about half an hour on a 16-thread processor, an hour or two on a 4- to 8-thread one. You can close it at any time and start it again later; what's done stays done, so a later run takes minutes. It needs Python and Visual Studio, as for [building](BUILDING.md).
+To prepare the discoverable stored shaders before playing, double-click **`Prepare Shaders.bat`**.
+It scans all regional `.eff`, `.nushdb` and `.arc` shader containers, builds the vertex/pixel
+interface variants, and includes additional variants already observed during gameplay.
+The archive scan can take several minutes before compilation progress appears. Compilation
+runs at low priority and reuses existing cache files; you can stop and restart it.
+It needs Python and Visual Studio, as for [building](BUILDING.md).
+The tested 13.0.3 archive now produces 64,940 static keys and a preparation list of
+65,050 entries including observed and previously validated variants. The whole-game
+scan checks every byte alignment; the earlier 16-byte scan missed additional programs.
+See the [coverage audit](SHADER_COVERAGE_AUDIT.md). Lists and diagnostics are under
+`dump\effect_profiles\whole-game\`: `compilation-list.txt`, `shaders.txt`, `profile.json`
+and `compile.log`. A failed run reports an error and returns a nonzero exit code.
+This cannot enumerate unseen compute dispatch sizes, jump-table values or every GPU pipeline state.
+
+Every play launcher (`Play SSBU Offline.bat`, `Play SSBU.bat`, `Host`/`Join SSBU Netplay.bat`)
+runs `tools\play_setup.bat` first. `build\ssbu.exe` renders through DXVK 3.1.1, whose
+`d3d11.dll` and `dxgi.dll` sit beside it in `build\`. The setup step prepares effects for
+recently played fighters (plus Mario and Ness), adds previously played shaders, and
+validates their cached DXBC. It then warms the GPU driver's own cache for every shader in
+the whole-game list ([why](NATIVE_DRIVER_CACHE.md)): the first time, or after a
+display-driver or DXVK update, this takes about 30–40 minutes. Afterwards it only handles
+new shaders, which is instant. `SSBU_NATIVE_WARM=0` skips it.
+
+The window can stay blank during preparation. Progress goes to
+`build\play.log`. After loading objects, it waits up to three minutes for
+DXVK shader-worker CPU activity to settle for three seconds (the play
+launchers allow ten minutes). This is a heuristic,
+not a driver completion fence: a timeout is logged explicitly. Cached compute
+shaders then receive an indirect dispatch with zero workgroups, followed by a GPU
+completion query, to prepare their pipelines without executing game shader work.
+Additional pipeline specialization, unseen shaders and texture uploads can still stall. It
+does not automatically detect the selected matchup or preload GPU textures.
+The log counts reused profile shader objects and requests without a prepared
+object, so a repeatable match can reveal missing coverage. The launchers
+also log exact `[shader-key]` filenames for new shader requests.
+It uses DXVK's normal optimized-pipeline mode and reuses unchanged composed GPU
+buffers, invalidating them when their CPU bytes or GPU-resident data change.
+Periodic full thread dumps (`--status`) are disabled in the launchers because they briefly
+stop game threads; lightweight frame timing and renderer statistics remain enabled.
+The launchers also enable conservative compute-buffer residency from
+the first dispatch (`SSBU_COMPUTE_RESIDENT_EAGER=1`), avoiding the initial eight
+full-buffer readback learning samples. Every storage binding of a writer is treated
+as potentially writable, synchronized through the existing resident path. Failed
+resident bindings retain readback for correctness. This can retain more GPU buffers;
+broader aliasing/effects correctness remains under test. Set the variable to `0`
+before launching to compare with the earlier learning mode.
+
+The launchers build a bounded effect profile for up to eight fighters loaded in the last game log, plus
+shared fighter/stage effects. This prepares their stored effects even before every
+attack has been used. Nana uses shared effects when there is no separate container.
+The profile is combined with the validated played cache and exact observed log keys
+in `dump\effect_profiles\startup-selected\shaders.txt`. The separate
+`startup-observed\shaders.txt` keeps only real play history: speculative recent-fighter
+effects are not marked as played or retained there. This retains the full cache without loading
+tens of thousands of speculative GPU objects or continuing that work in a match.
+Shaders served from preparation are marked as played for future starts too.
+Startup logs completion and memory use. Both object loading and driver-worker waiting
+honor `SSBU_EFFECT_WAIT_SECONDS`; an object-loading timeout stops startup instead of
+carrying unfinished loading into play. `SSBU_PREWARM_ALL=1` explicitly requests the
+larger object manifest (up to an hour in whole-game mode), with much greater memory
+and startup costs. Loading all objects is still not proof that every GPU pipeline
+has compiled.
+
+The retained DXVK configuration still uses legacy descriptor bindings. An isolated
+Auto/descriptor-heap trial did not establish a stutter improvement, so it was not
+adopted. The first preparation of newly selected fighter effects can take longer;
+startup logs both object completion and driver-worker activity. F4 produces detailed
+draw logs and GPU readback captures; those diagnostic frames can pause noticeably.
+
+**`Unlock All Fighters.bat`** supports the verified save layouts for 11.0.0, 13.0.3
+and 13.0.5. Close the game first. It backs up the previous save before changing base-game
+fighter flags; DLC availability still depends on installed content. For a preview,
+run `"Unlock All Fighters.bat" -DryRun` in a terminal. Both utility launchers support
+`SSBU_NO_PAUSE=1` for scripted use and preserve the underlying tool's exit code.
 
 ## Where your files are
 

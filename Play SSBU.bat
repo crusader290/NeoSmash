@@ -28,7 +28,8 @@ if defined SSBU_NET_RELAY (
     for /f "usebackq delims=" %%a in ("online_name.txt") do if not defined SSBU_NET_NAME set "SSBU_NET_NAME=%%a"
 )
 if exist online_direct.txt for /f "usebackq eol=# tokens=1" %%a in ("online_direct.txt") do if /i "%%a"=="off" set "SSBU_NET_DIRECT=0"
-start "SSBU log" /min cmd /c "%SSBU_TREE%\build\ssbu.exe %SSBU_TREE%\dump\modules --status 30 > %SSBU_TREE%\build\play.log 2>&1"
+call tools\play_setup.bat || (pause & exit /b 1)
+start "SSBU log" /min cmd /c "%SSBU_TREE%\build\ssbu.exe %SSBU_TREE%\dump\modules > %SSBU_TREE%\build\play.log 2>&1"
 exit /b 0
 
 :ask_name

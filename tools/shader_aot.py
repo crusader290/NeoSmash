@@ -5,9 +5,10 @@ Usage:
   shader_aot.py [--tree <dir>] [--jobs N] [--dry]
 
 The game's GPU programs are stored in data.arc as they are uploaded: in the effect files
-(.eff), the shader databases (.nushdb) and nested archives (.arc). This finds every program
-there (by its header word: 256-byte boundaries + 0x30 in effects and archives, 16-byte ones in
-databases), keeps one copy of each, pairs each pixel program with the vertex programs of its
+(.eff), the shader databases (.nushdb) and nested archives (.arc). This command uses the
+original common-alignment scan; tools/prepare_effects.py --whole-game scans every byte
+position and all regional variants. Discovery keeps one copy of each program blob and pairs
+each pixel program with the vertex programs of its
 file (a vertex program's outputs are its pixel program's inputs), and has
 tools/shaderaot.c translate and compile them all into <tree>/dump/shadercache, exactly as the
 renderer would: a program's first use in the game then loads its DXBC instead of compiling it.
@@ -32,7 +33,11 @@ except ImportError:                                               # 3.10 to 3.13
     import zstandard
 
     def zstd_decompress(data):
-        return zstandard.ZstdDecompressor().decompressobj().decompress(data)
+        decoder = zstandard.ZstdDecompressor().decompressobj()
+        result = decoder.decompress(data)
+        if not decoder.eof:
+            raise ValueError("truncated zstd shader container")
+        return result
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import arc as A    # noqa: E402
@@ -50,32 +55,70 @@ def is_header(w):
     return v == 3 and sass == 3 and ((t == 1 and st == 1) or (t == 2 and st == 5))
 
 
-def containers(arc):
-    """(extension, (offset, stored size, size, flags)) of every distinct .eff/.nushdb/.arc."""
+def is_program_header(data, offset=0):
+    """Validate the complete SPH, not just a coincidental first word in archive data.
+
+    NVIDIA's SPH type 2 ends with OmapSampleMask, OmapDepth and 30 reserved bits:
+    https://nvidia.github.io/open-gpu-doc/Shader-Program-Header/Shader-Program-Header.html
+    The reserved bits must be zero. Vertex headers have a different output layout.
+    """
+    if offset < 0 or offset + 0x50 > len(data):
+        return False
+    first, = struct.unpack_from("<I", data, offset)
+    if not is_header(first):
+        return False
+    words = struct.unpack_from("<6I", data, offset)
+    # CommonWord0/3/4 and ImapSystemValuesA reserved bits. Maxwell programs in
+    # this game use bit 25, so that bit stays accepted in CommonWord0.
+    if (words[0] & 0x01E00000 or words[3] & 0xF0000000 or
+            words[4] & 0x00F00000 or words[5] & 0x00FFFC0F):
+        return False
+    if first & 0x1F == 2:
+        last, = struct.unpack_from("<I", data, offset + 0x4C)
+        if last & 0xFFFFFFFC:
+            return False
+    return True
+
+
+def containers(arc, *, all_regions=False, all_files=False):
+    """Distinct shader containers, or all archive file types for an explicit audit."""
     want = {A.hash40(e): e for e in ("eff", "nushdb", "arc")}
     seen, out = set(), []
     off, size, count = arc.tab["paths"]
     for i in range(count):
         full, ext = struct.unpack_from("<QQ", arc.t, off + i * size)
         e = want.get(ext & LOW40)
-        if not e:
+        if not e and not all_files:
             continue
+        if not e:
+            e = f"extension-{ext & LOW40:010x}"
         try:
             info = arc._entry("info_indices", full >> 40, "<2I")[1]
-            where = arc._data(arc._entry("infos", info, "<4I")[2])
+            _, _, to_data, flags = arc._entry("infos", info, "<4I")
         except struct.error:
             continue
-        if where and where[0] not in seen:
-            seen.add(where[0])
-            out.append((e, where))
+        for region in range(arc.regions) if all_regions and flags & 0x8000 else (0,):
+            where = arc._data(to_data + region)
+            if where and where[0] not in seen:
+                seen.add(where[0])
+                out.append((e, where))
     return out
 
 
-def find_programs(arc):
+# Native regex scanning makes an exhaustive byte-alignment archive audit practical.
+# Full SPH validation below still checks the paired stage and all reserved fields.
+HEADER_PREFIX = re.compile(rb"[\x61\x62][\x04\x14\x44\x54\x84\x94\xc4\xd4][\x06\x07].", re.DOTALL)
+
+
+def find_programs(arc, scan_stats=None, *, entries=None, all_alignments=False,
+                  byte_alignments=False, on_container=None):
     """Distinct programs: list of [stage, bytes, set of paired vertex program ids]."""
     programs, ids = [], {}
     unread = 0
-    for ext, (off, stored, size, flags) in containers(arc):
+    rejected_headers = 0
+    for ext, (off, stored, size, flags) in (containers(arc) if entries is None else entries):
+        if on_container:
+            on_container(ext, size)
         if not stored or not size:   # (an empty file - data.arc has a few, marked compressed: nothing in it)
             continue
         data = arc.read(off, stored)
@@ -85,9 +128,19 @@ def find_programs(arc):
             except Exception:
                 unread += 1
                 continue
-        step, start = (16, 0) if ext == "nushdb" else (256, 0x30)
+        step, start = (16, 0) if ext == "nushdb" or all_alignments else (256, 0x30)
         mv = memoryview(data)
-        at = [k for k in range(start, len(data) - 0x60, step) if is_header(int.from_bytes(mv[k:k + 4], "little"))]
+        at = []
+        offsets = (match.start() for match in HEADER_PREFIX.finditer(data)) if byte_alignments else range(start, len(data) - 0x60, step)
+        for k in offsets:
+            if k + 0x60 > len(data):
+                continue
+            if not is_header(struct.unpack_from("<I", mv, k)[0]):
+                continue
+            if is_program_header(mv, k):
+                at.append(k)
+            else:
+                rejected_headers += 1
         here = ([], [])
         for j, k in enumerate(at):
             end = min(len(data), k + MAX_PROGRAM, at[j + 1] if j + 1 < len(at) else len(data))
@@ -104,6 +157,8 @@ def find_programs(arc):
         # game has only a few dozen distinct vertex output masks, so this stays small)
         for pid in here[1]:
             programs[pid][2].update(here[0])
+    if scan_stats is not None:
+        scan_stats["invalid_headers"] = rejected_headers
     return programs, unread
 
 
@@ -136,10 +191,13 @@ def main():
     tree = os.path.abspath(a.tree)
     t0 = time.time()
     arc = A.Arc(os.path.join(tree, "dump", "modules", "romfs.cfg"))
-    programs, unread = find_programs(arc)
+    scan_stats = {}
+    programs, unread = find_programs(arc, scan_stats)
     nvs = sum(1 for p in programs if p[0] == 0)
     print(f"{len(programs)} distinct programs ({nvs} vertex, {len(programs) - nvs} pixel) in {time.time() - t0:.0f} s"
           + (f"; {unread} files could not be read" if unread else ""), flush=True)
+    if scan_stats["invalid_headers"]:
+        print(f"ignored {scan_stats['invalid_headers']} invalid shader-header matches in archive data", flush=True)
     work = os.path.join(tree, "dump", "aot")
     os.makedirs(work, exist_ok=True)
     pack = os.path.join(work, "programs.pack")
@@ -159,7 +217,9 @@ def main():
     else:
         print(f"compiling with {jobs} processes at low priority (the PC stays usable; close this window to stop: "
               "what is done stays done)", flush=True)
-        parts = follow(procs, Progress(sys.stdout))
+        diagnostics_path = os.path.join(work, "compile-errors.log")
+        with open(diagnostics_path, "w", encoding="utf-8") as diagnostics:
+            parts = follow(procs, Progress(sys.stdout), diagnostics=diagnostics)
         print(summary(parts) or "\n".join(parts))
     if a.dry:
         keys = {tuple(l.split()) for l in outs[0][0].splitlines()}
@@ -246,10 +306,11 @@ class Progress:
                 self.shown, self.last = step, text
 
 
-def follow(procs, show, every=1.0):
+def follow(procs, show, every=1.0, diagnostics=None):
     """Waits for the parts, showing their progress as it comes; returns their last lines ("part ...")."""
     state = [(0, None)] * len(procs)
     lasts = []
+    diagnostics_lock = threading.Lock()
 
     def read(i, p):
         for line in p.stderr:
@@ -258,6 +319,10 @@ def follow(procs, show, every=1.0):
                 state[i] = got
             elif line.startswith("part "):
                 lasts.append(line.rstrip())
+            elif diagnostics is not None:
+                with diagnostics_lock:
+                    diagnostics.write(line)
+                    diagnostics.flush()
     readers = [threading.Thread(target=read, args=(i, p), daemon=True) for i, p in enumerate(procs)]
     for r in readers:
         r.start()

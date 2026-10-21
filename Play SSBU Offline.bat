@@ -14,4 +14,5 @@ rem others: v13.0.5\ and so on - see docs\VERSIONS.md); with more than one, this
 rem start. Its log goes to <version folder>\build\play.log.
 cd /d "%~dp0"
 call tools\pick_version.bat || (pause & exit /b 1)
-start "SSBU log" /min cmd /c "%SSBU_TREE%\build\ssbu.exe %SSBU_TREE%\dump\modules --status 30 > %SSBU_TREE%\build\play.log 2>&1"
+call tools\play_setup.bat || (pause & exit /b 1)
+start "SSBU log" /min cmd /c "%SSBU_TREE%\build\ssbu.exe %SSBU_TREE%\dump\modules > %SSBU_TREE%\build\play.log 2>&1"

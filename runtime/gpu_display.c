@@ -13,7 +13,7 @@
  *   vrr      the same clock, and each frame goes to the screen the moment it is ready
  *            (DXGI_PRESENT_ALLOW_TEARING): with G-Sync / FreeSync it is shown for exactly
  *            16.7 ms; without, it tears.
- *   display  the monitor's own refreshes (every 1st/2nd/4th at 60/120/240 Hz): every frame is
+ *   display  the monitor's own refreshes (every 1st/2nd/3rd/4th at 60/120/180/240 Hz): every frame is
  *            on screen equally long, but the game then runs at the monitor's real rate (59.94
  *            frames a second on a 59.94 Hz monitor). Falls back to the clock on other rates.
  * SSBU_WINDOW, SSBU_WINDOW_SIZE (WxH) and SSBU_PACING override the file (test runs).
@@ -68,7 +68,7 @@ static const char DEFAULT_INI[] =
     ";   clock:   a steady 60 frames a second; each is shown at the monitor's next refresh.\n"
     ";   vrr:     for G-Sync / FreeSync monitors: each frame is shown the moment it is ready, so every\n"
     ";            frame stays on screen exactly 16.7 ms. Best with window = borderless. Tears without VRR.\n"
-    ";   display: follow the monitor's refreshes (60, 120 or 240 Hz only; else as clock). The game then\n"
+    ";   display: follow the monitor's refreshes (60, 120, 180 or 240 Hz only; else as clock). The game then\n"
     ";            runs at the monitor's exact rate, e.g. 59.94 frames a second.\n"
 #else
     ";   clock:   a steady 60 frames a second, each presented the moment it is ready. A compositing\n"
@@ -388,11 +388,11 @@ static int vblank_tick(void) {
         if (output) IDXGIOutput_Release(output);
         output = (IDXGIOutput *)gfx_display_output();
         int hz = monitor_hz();
-        divisor = hz >= 58 && hz <= 61 ? 1 : hz >= 118 && hz <= 121 ? 2 : hz >= 238 && hz <= 241 ? 4 : 0;
+        divisor = hz >= 58 && hz <= 61 ? 1 : hz >= 118 && hz <= 121 ? 2 : hz >= 178 && hz <= 181 ? 3 : hz >= 238 && hz <= 241 ? 4 : 0;
         static int logged_hz = -1;
         if (hz != logged_hz && output) {
             logged_hz = hz;
-            fprintf(stderr, "[display] %d Hz monitor: %s\n", hz, divisor ? "display pacing" : "clock pacing (display pacing needs 60, 120 or 240 Hz)");
+            fprintf(stderr, "[display] %d Hz monitor: %s\n", hz, divisor ? "display pacing" : "clock pacing (display pacing needs 60, 120, 180 or 240 Hz)");
         }
     }
     if (!output || !divisor) return 0;
@@ -402,6 +402,11 @@ static int vblank_tick(void) {
     for (int i = 0; i < divisor; i++)
         if (FAILED(IDXGIOutput_WaitForVBlank(output))) { failed = 1; break; }
     QueryPerformanceCounter(&t1);
+    /* Some Windows outputs return repeated waits within one refresh. At divisor > 1,
+     * at least divisor-1 full refresh periods must elapse, even if the first wait is
+     * immediate. Otherwise the game can run at the monitor's rate instead of 60 Hz. */
+    if (!failed && divisor > 1 &&
+        (t1.QuadPart - t0.QuadPart) * 60 * divisor * 4 < (divisor - 1) * freq.QuadPart * 3) failed = 1;
     if (!failed && (t1.QuadPart - t0.QuadPart) * 1000 / freq.QuadPart > 50 * divisor) failed = 1;
     if (failed) fprintf(stderr, "[display] waiting for the monitor's refresh failed: clock pacing from now on\n");
     return !failed;

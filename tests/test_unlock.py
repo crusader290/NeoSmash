@@ -102,6 +102,21 @@ class UnlockTests(unittest.TestCase):
         self.assertEqual(self.save.read_bytes(), data)
         self.assertFalse((self.root / 'save_backups').exists())
 
+    def test_current_1303_layout_supported(self):
+        write_main(self.root, '730C2141EEBF9885E4857E7E50EAE441D46925DF')
+        result = self.invoke('-DryRun')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Game version 13.0.3', result.stdout)
+        self.assertEqual(self.save.read_bytes(), self.before)
+
+    def test_invalid_module_rejected(self):
+        (self.root / 'dump/exefs/main').write_bytes(b'bad module')
+        result = self.invoke()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('not a valid game module', result.stdout)
+        self.assertEqual(self.save.read_bytes(), self.before)
+        self.assertFalse((self.root / 'save_backups').exists())
+
     def test_unknown_game_version_rejected(self):
         # A game version whose save layout the tools don't know: both refuse and change nothing.
         write_main(self.root, '00112233445566778899AABBCCDDEEFF01234567')

@@ -15,13 +15,17 @@ try {
     # build id = game version, save size, FLAGS, RECORDS
     $knownLayouts = @{
         '4A3F8ED7DCCE3AD4541A3A2F7622B5B57FC8A55C' = @('11.0.0', 0x5B4AF8, 0x53FF40, 0x54FEA8)
+        '730C2141EEBF9885E4857E7E50EAE441D46925DF' = @('13.0.3', 0x5B4AF8, 0x53FF40, 0x54FEA8)
         '21450C647B8C5940ED5B68218EA128FD3C5D597D' = @('13.0.5', 0x5B4AF8, 0x53FF40, 0x54FEA8)
     }
     $knownVersions = ($knownLayouts.Values | ForEach-Object { $_[0] } | Sort-Object) -join ', '
     $mainPath = Join-Path $Tree 'dump\exefs\main'
     if (-not (Test-Path -LiteralPath $mainPath -PathType Leaf)) { throw "No game in $Tree (dump\exefs\main is missing)." }
     $stream = [System.IO.File]::OpenRead($mainPath)
-    try { $head = New-Object byte[] 0x60; [void]$stream.Read($head, 0, 0x60) } finally { $stream.Close() }
+    try { $head = New-Object byte[] 0x60; $read = $stream.Read($head, 0, 0x60) } finally { $stream.Close() }
+    if ($read -ne 0x60 -or [Text.Encoding]::ASCII.GetString($head, 0, 4) -ne 'NSO0') {
+        throw 'dump\exefs\main is not a valid game module. The save has not been changed.'
+    }
     $buildId = (($head[0x40..0x5F] | ForEach-Object { $_.ToString('X2') }) -join '').TrimEnd('0')
     if (-not $knownLayouts.ContainsKey($buildId)) {
         $versionFile = Join-Path $Tree 'version.txt'

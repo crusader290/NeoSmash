@@ -88,6 +88,14 @@ class ProgressTests(unittest.TestCase):
         self.assertEqual(sorted(last), ['part 0/2: done', 'part 1/2: done'])
         self.assertEqual(seen[-1], ([(20, 20), (10, 10)], True))
 
+    def test_follow_keeps_compiler_errors(self):
+        diagnostic = 'ps_1: fxc failed: invalid texture sample\n'
+        proc = types.SimpleNamespace(stderr=io.StringIO('progress 0 1\n' + diagnostic + 'progress 1 1\npart 0/1: done\n'),
+                                     wait=lambda: 0)
+        errors = io.StringIO()
+        self.assertEqual(S.follow([proc], lambda *args, **kwargs: None, every=0.01, diagnostics=errors), ['part 0/1: done'])
+        self.assertEqual(errors.getvalue(), diagnostic)
+
 
 if __name__ == '__main__':
     unittest.main()

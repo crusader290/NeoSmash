@@ -23,7 +23,8 @@ set "SSBU_NET_PORT=39420"
 set /p "SSBU_NET_PORT=UDP port [39420]: "
 set "SSBU_NET_HOST=1"
 if exist netplay_address.txt del netplay_address.txt
-start "SSBU netplay host log" /min cmd /c "%SSBU_TREE%\build\ssbu.exe %SSBU_TREE%\dump\modules --status 30 > %SSBU_TREE%\build\play.log 2>&1"
+call tools\play_setup.bat || (pause & exit /b 1)
+start "SSBU netplay host log" /min cmd /c "%SSBU_TREE%\build\ssbu.exe %SSBU_TREE%\dump\modules > %SSBU_TREE%\build\play.log 2>&1"
 echo.
 echo Starting the game as host of room "%SSBU_NET_ROOM%"...
 echo In the game: Local Wireless ^> Create a Room. The others pick your room from the list.

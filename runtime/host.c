@@ -46,6 +46,7 @@ extern u64 gpu_stat_batches, gpu_stat_lists, gpu_stat_draws, gpu_stat_dispatches
     gfx_stat_shaders, gfx_stat_shader_failures, gfx_stat_textures, gfx_stat_watch_us, gfx_skip_shader, gfx_skip_topology, gfx_skip_target;
 u64 present_frames(void);
 void gfx_report_compiles(void (*line)(const char *text));
+int gfx_native_warm_main(const char *list, const char *dir);
 const char *rt_data_dir;
 /* This thread is reading another thread's stack (debug_profile.c): a fault there is expected and
  * handled where it happens, not a crash. */
@@ -875,6 +876,8 @@ int main(int argc, char **argv) {
 #ifdef _WIN32
     if (argc >= 6 && !strcmp(argv[1], "--write-dump")) return write_dump_main(argv);
 #endif
+    /* (before any of the game: only the GPU driver's cache, see gpu_native_warm.h) */
+    if (argc >= 4 && !strcmp(argv[1], "--native-warm")) return gfx_native_warm_main(argv[2], argv[3]);
     if (argc < 2) { fprintf(stderr, "usage: ssbu <directory with *.reloc.bin images> [--trace]\n"); return 2; }
     display_dpi_aware();
 #ifdef _WIN32
