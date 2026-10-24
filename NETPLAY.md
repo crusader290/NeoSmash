@@ -15,6 +15,7 @@ NeoSmash plays the game's **Local Wireless** mode over the internet. To the game
 - [Online mode (Quickplay)](#online-mode-quickplay)
 - [Direct connections and your internet address](#direct-connections-and-your-internet-address)
 - [Private room](#private-room)
+- [Through Steam (friends)](#through-steam-friends)
 - [If a room doesn't appear](#if-a-room-doesnt-appear)
 - [Run your own lobby](#run-your-own-lobby)
 - [Logs and privacy](#logs-and-privacy)
@@ -27,6 +28,7 @@ NeoSmash plays the game's **Local Wireless** mode over the internet. To the game
 | [**Online lobby**](#online-lobby) | Playing with anyone | None | `Play SSBU.bat` |
 | [**Lobby code**](#friends-only-a-lobby-code) | Friends only, through the lobby | None | `Play SSBU.bat` |
 | [**Online mode**](#online-mode-quickplay) | Quickplay with anyone searching (new) | None | `Play SSBU.bat` |
+| [**Through Steam**](#through-steam-friends) | Friends, from anywhere, with low delay | None | `Host SSBU Steam.bat` and `Join SSBU Steam.bat` |
 | [**Private room**](#private-room) | A group with one host | The host may need to open a port | `Host SSBU Netplay.bat` and `Join SSBU Netplay.bat` |
 | [**Your own lobby**](#run-your-own-lobby) | Communities with a server | The server's port | `Play SSBU.bat` |
 
@@ -168,6 +170,34 @@ Joining players don't need to change anything on their routers.
 
 If your internet provider uses carrier-grade NAT, or your router sits behind another router, forwarding a port at home may not be enough. A virtual LAN, a relay on a server, or the [online lobby](#online-lobby) is usually easier.
 
+## Through Steam (friends)
+
+The Steam launchers carry a private room's traffic through Steam's networking instead of your
+internet address. Steam finds a direct path between the PCs, or relays through its own servers,
+which are usually close by. Nobody opens a port, and the lobby server isn't used, so a slow
+connection to the public lobby doesn't matter.
+
+You need the Steam client running and signed in on every PC. While you play, Steam shows you as
+playing **Spacewar**: that's Valve's own test app, which the bridge runs as.
+
+1. **The host** double-clicks **`Host SSBU Steam.bat`** and presses <kbd>Enter</kbd> for a random
+   room code, or types one. The code shows in the window: send it to your friends. In the game,
+   choose **Local Wireless**, then **Create a Room**.
+2. **Each friend** double-clicks **`Join SSBU Steam.bat`** and types the host's room code. Press
+   <kbd>Enter</kbd> without a code to pick from friends who are hosting. In the game, choose
+   **Local Wireless**, then **Rooms List**, and pick the host's room.
+
+- The first start builds the bridge (`build\steam\neosmash_steam.exe`) and copies Steam's
+  `steam_api64.dll` into `build\steam\` from one of your installed Steam games. Only a copy that
+  Valve signed is used, and it is never committed. To pick one yourself, run
+  `python tools\steam_setup.py --dll <path>`.
+- Only players in the host's Steam lobby can connect. The room code finds the lobby, like a lobby
+  code online: anyone who knows it can join.
+- If Windows Security asks about `neosmash_steam.exe` or `ssbu.exe`, click **Allow**. Steam's
+  relays work without it, but direct paths between the PCs need it. The executable lives at
+  `build\ssbu.exe` in the `NeoSmash` folder now, so Windows may ask again after the move.
+- The bridge's messages and the game's log are in `build\play.log`.
+
 ## If a room doesn't appear
 
 | What you see | What to check |
@@ -233,6 +263,7 @@ The launchers write `build\play.log`. For more network detail, set `SSBU_NET_LOG
 | `SSBU_NET_BIND` | Limit which address the built-in relay listens on; used by local tests. |
 | `SSBU_NET_DIRECT=0` | Online, send all traffic through the lobby. `Play SSBU.bat` sets it when `online_direct.txt` says `off`. |
 | `SSBU_NET_TEST_NAT=1`, `SSBU_NET_TEST_BLOCK=<seconds>` | Local tests: filter incoming packets as a router would, or cut direct paths that many seconds after the start. |
+| `SSBU_NATIVE_WARM=0` | Skip the launchers' GPU driver cache warm-up ([why](docs/NATIVE_DRIVER_CACHE.md)). |
 | `SSBU_NET_LOG=1` / `2` | Network logging: a summary, or more detail. |
 | `SSBU_ONLINE_COUNTRY` | The country Online mode reports, as two letters such as `GB`. Default `US`. |
 | `SSBU_ONLINE_SERVER` | `off` turns Online mode off. Otherwise the game server's address inside the lobby, `10.13.0.1:60000` by default; only for tests. |
