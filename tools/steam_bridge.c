@@ -518,9 +518,7 @@ int main(int argc, char **argv) {
                 /* Steam does not carry messages from an account to itself: a second game here would
                  * wait for a host it can never reach */
                 SAY("steam: that room is hosted by this same Steam account (%s). Steam cannot connect an account\n"
-                    "to itself: join from another PC signed in to another Steam account. To try netplay on one PC,\n"
-                    "use Host SSBU Netplay.bat and Join SSBU Netplay.bat with the address 127.0.0.1.\n",
-                    S.PersonaName(friends));
+                    "to itself: join from another PC signed in to another Steam account.\n", S.PersonaName(friends));
                 S.LeaveLobby(mm, lobby);
                 S.Shutdown();
                 return 1;

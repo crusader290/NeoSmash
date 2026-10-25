@@ -197,6 +197,11 @@ playing **Spacewar**: that's Valve's own test app, which the bridge runs as.
   relays work without it, but direct paths between the PCs need it. The executable lives at
   `build\ssbu.exe` in the `NeoSmash` folder now, so Windows may ask again after the move.
 - The bridge's messages and the game's log are in `build\play.log`.
+- **Host and joiners need different Steam accounts**, normally on different PCs: Steam can't connect an
+  account to itself, and the join launcher says so instead of starting a second game.
+- To see the open rooms of your game version: `build\steam\neosmash_steam.exe rooms --build <the main build id in version.txt>`.
+- The game gets none of Steam's own settings (its overlay and pipeline recorder, its controller
+  filters). Before this, hosting stalled on "preparing match shaders" and PS4 controllers went missing.
 
 ## If a room doesn't appear
 
