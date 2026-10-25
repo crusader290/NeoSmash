@@ -311,12 +311,65 @@ static void quote_append(char *out, size_t n, const char *arg) {
     snprintf(out + l, n - l, "%s\"%s\"", l ? " " : "", arg);
 }
 
+/* The environment as it was before Steam started in this process. SteamAPI_Init sets variables for
+ * "its game" (this bridge): Steam's Vulkan layers (ENABLE_VK_LAYER_VALVE_steam_fossilize_1 and
+ * _overlay_1: the pipeline recorder kept DXVK's shader workers busy, so the game stayed on
+ * "preparing match shaders", and the overlay hooks the game), SDL's list of controllers to ignore
+ * (Sony's among them: the game lost the PS4 controller), the app id. The game gets this copy, the
+ * bridge's own netplay settings, and both layers turned off. */
+static char *env_before;
+
+static void snapshot_environment(void) {
+    char *block = GetEnvironmentStringsA(), *end = block;
+    while (*end) end += strlen(end) + 1;
+    env_before = malloc(end - block + 1);
+    memcpy(env_before, block, end - block + 1);
+    FreeEnvironmentStringsA(block);
+}
+
+static int by_name(const void *a, const void *b) { return _stricmp(*(char *const *)a, *(char *const *)b); }
+
+static char *game_environment(void) {
+    static const char *const ours[] = {"SSBU_NET_NAME", "SSBU_NET_DIRECT", "SSBU_NET_UPNP", "SSBU_NET_HOST", "SSBU_NET_BIND",
+                                       "SSBU_NET_PORT", "SSBU_NET_ROOM", "SSBU_NET_RELAY"};
+    static char extra[16][512];
+    char *entries[4096];
+    int n = 0, k = 0;
+    for (char *e = env_before; *e && n < 4000; e += strlen(e) + 1) {
+        int skip = 0;
+        for (size_t i = 0; i < sizeof ours / sizeof *ours && !skip; i++) {
+            size_t l = strlen(ours[i]);
+            skip = !_strnicmp(e, ours[i], l) && e[l] == '=';
+        }
+        if (!skip && _strnicmp(e, "DISABLE_VK_LAYER_VALVE_steam_", 29)) entries[n++] = e;
+    }
+    for (size_t i = 0; i < sizeof ours / sizeof *ours; i++) {
+        char value[480];
+        if (GetEnvironmentVariableA(ours[i], value, sizeof value)) {
+            snprintf(extra[k], sizeof extra[k], "%s=%s", ours[i], value);
+            entries[n++] = extra[k++];
+        }
+    }
+    entries[n++] = "DISABLE_VK_LAYER_VALVE_steam_fossilize_1=1";
+    entries[n++] = "DISABLE_VK_LAYER_VALVE_steam_overlay_1=1";
+    qsort(entries, n, sizeof *entries, by_name);   /* (CreateProcess wants the block sorted) */
+    size_t size = 1;
+    for (int i = 0; i < n; i++) size += strlen(entries[i]) + 1;
+    char *block = malloc(size), *at = block;
+    for (int i = 0; i < n; i++) { size_t l = strlen(entries[i]) + 1; memcpy(at, entries[i], l); at += l; }
+    *at = 0;
+    return block;
+}
+
 static HANDLE start_game(int argc, char **argv) {
     char cmd[8192] = "";
     for (int i = 0; i < argc; i++) quote_append(cmd, sizeof cmd, argv[i]);
     STARTUPINFOA si = {sizeof si};
     PROCESS_INFORMATION pi;
-    if (!CreateProcessA(NULL, cmd, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+    char *env = env_before ? game_environment() : NULL;
+    BOOL ok = CreateProcessA(NULL, cmd, NULL, NULL, TRUE, 0, env, NULL, &si, &pi);
+    free(env);
+    if (!ok) {
         SAY( "steam: cannot start the game: %s\n", cmd);
         return NULL;
     }
@@ -387,6 +440,7 @@ int main(int argc, char **argv) {
     hosting = !strcmp(mode, "host");
     if (!hosting && strcmp(mode, "join") && strcmp(mode, "list")) return usage();
     if (!*build) { fprintf(stderr, "steam: --build (the game's build id, version.txt) is needed\n"); return 2; }
+    snapshot_environment();   /* (before Steam adds its own: see game_environment) */
     WSADATA wsa;
     WSAStartup(MAKEWORD(2, 2), &wsa);
     timeBeginPeriod(1);

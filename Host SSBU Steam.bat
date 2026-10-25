@@ -29,7 +29,10 @@ set "SSBU_STEAM_ARGS="
 if defined SSBU_STEAM_CODE set "SSBU_STEAM_ARGS=--code %SSBU_STEAM_CODE%"
 echo Starting the game as the room's host. In the game: Local Wireless ^> Create a Room.
 "%~dp0build\steam\neosmash_steam.exe" host --build %SSBU_BUILD% %SSBU_STEAM_ARGS% -- "%SSBU_TREE%\build\ssbu.exe" "%SSBU_TREE%\dump\modules" 2> "%SSBU_TREE%\build\play.log"
-if errorlevel 1 (
-    echo The game or the Steam bridge reported an error. See %SSBU_TREE%\build\play.log
+rem (a crash ends with a negative code, which "if errorlevel 1" does not see)
+set "SSBU_RESULT=%ERRORLEVEL%"
+if not "%SSBU_RESULT%"=="0" (
+    echo The game or the Steam bridge reported an error ^(exit code %SSBU_RESULT%^). The end of %SSBU_TREE%\build\play.log:
+    powershell -NoProfile -Command "Get-Content -LiteralPath '%SSBU_TREE%\build\play.log' -Tail 15"
     pause
 )
