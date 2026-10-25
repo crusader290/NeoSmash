@@ -28,6 +28,7 @@ NeoSmash plays the game's **Local Wireless** mode over the internet. To the game
 | [**Online lobby**](#online-lobby) | Playing with anyone | None | `Play SSBU.bat` |
 | [**Lobby code**](#friends-only-a-lobby-code) | Friends only, through the lobby | None | `Play SSBU.bat` |
 | [**Online mode**](#online-mode-quickplay) | Quickplay with anyone searching (new) | None | `Play SSBU.bat` |
+| [**Steam lobby (Australia)**](#steam-lobby-australia) | Everyone with NeoSmash, one shared lobby | None | `Play SSBU Steam.bat` |
 | [**Through Steam**](#through-steam-friends) | Friends, from anywhere, with low delay | None | `Host SSBU Steam.bat` and `Join SSBU Steam.bat` |
 | [**Private room**](#private-room) | A group with one host | The host may need to open a port | `Host SSBU Netplay.bat` and `Join SSBU Netplay.bat` |
 | [**Your own lobby**](#run-your-own-lobby) | Communities with a server | The server's port | `Play SSBU.bat` |
@@ -170,7 +171,22 @@ Joining players don't need to change anything on their routers.
 
 If your internet provider uses carrier-grade NAT, or your router sits behind another router, forwarding a port at home may not be enough. A virtual LAN, a relay on a server, or the [online lobby](#online-lobby) is usually easier.
 
-## Through Steam (friends)
+## Steam lobby (Australia)
+
+**`Play SSBU Steam.bat`** puts everyone who starts it, with the same game version, into one shared
+Steam lobby: **NeoSmash Australia**. In the game, **Local Wireless** lists every room anyone in it
+creates, as the online lobby does: create one, or pick one from the **Rooms List**. Nobody types a
+code or hosts anything by hand, and nobody opens a port.
+
+- The first player to start it makes the lobby; whoever has been in it longest runs it from their
+  PC (the bridge starts `tools/ssbu_relay.py` there, on 127.0.0.1). Everyone else's traffic goes
+  to that PC through Steam, which finds a direct path or relays through its servers nearby.
+- When that player leaves, Steam names another, whose PC takes over within seconds. Everyone's
+  game rejoins by itself; a match in progress at that moment ends.
+- Up to 250 players (Steam's lobby limit). It needs Steam running and signed in, and Python on the
+  PC that runs the lobby (NeoSmash's own `.venv` or the installer's).
+- Every player needs a Steam account of their own: one account can't play with itself.
+
 
 The Steam launchers carry a private room's traffic through Steam's networking instead of your
 internet address. Steam finds a direct path between the PCs, or relays through its own servers,

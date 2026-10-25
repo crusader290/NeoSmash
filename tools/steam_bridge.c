@@ -14,6 +14,8 @@
  *   neosmash_steam host [--code CODE] [--room NAME] [--port 39420] --build ID -- <game command>
  *   neosmash_steam join [--code CODE] [--port 39430] --build ID -- <game command>
  *   neosmash_steam list --build ID
+ *   neosmash_steam lobby [--region au] [--port 39430] --build ID -- <game command>
+ *                                            (everyone in one shared lobby; see run_lobby)
  *   neosmash_steam rooms --build ID          (every open room of this build: code, host, players)
  *
  * Steam runs it as Spacewar (app 480, Valve's test app): the Steam client must be running and
@@ -24,6 +26,7 @@
  * joiner's PEER is the host's LOCAL), so two games on one PC test the bridging (tools/netmatch.py
  * --steam-test). Steam's API is loaded at run time through its flat C interface, no SDK needed. */
 #define WIN32_LEAN_AND_MEAN
+#define FD_SETSIZE 512   /* (select over a shared lobby's sockets: one a player, up to 250) */
 #define _CRT_SECURE_NO_WARNINGS
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -418,28 +421,233 @@ static u64 find_lobby(const char *build, const char *code) {
     return found[pick - 1];
 }
 
+/* ---- the shared lobby (Play SSBU Steam.bat) ---------------------------------------------------
+ * Everyone joins one public Steam lobby for this game build and region ("au": NeoSmash Australia),
+ * made by whoever comes first. Its owner's bridge runs the online lobby server (tools/ssbu_relay.py,
+ * on 127.0.0.1, SSBU_STEAM_RELAY_CMD says how) and gives every member - itself too - a local socket
+ * of its own into it, so the server sees one address per player. Every game talks to its own
+ * bridge on 127.0.0.1; the bridge passes that on to the owner's server, over Steam unless it is the
+ * owner. Each player's Local Wireless rooms are listed to all, as in the online lobby. When the owner
+ * leaves, Steam names another, whose bridge starts the server; the games notice their lobby went
+ * quiet and join again (runtime/net_relay.c), so rooms in progress end but the lobby goes on. */
+#define LOBBY_MAX 250
+static struct { u64 id; SOCKET s; DWORD seen; } lpeers[LOBBY_MAX];   /* owner: a socket into the server per member */
+static u64 me_id, server_owner;
+static HANDLE server_proc, server_job;
+static u_short server_port;
+
+static void stop_server(void) {
+    if (server_proc) { TerminateProcess(server_proc, 0); CloseHandle(server_proc); server_proc = NULL; }
+    for (int i = 0; i < LOBBY_MAX; i++)
+        if (lpeers[i].s) { closesocket(lpeers[i].s); memset(&lpeers[i], 0, sizeof lpeers[i]); }
+}
+
+static int start_server(void) {
+    const char *base = getenv("SSBU_STEAM_RELAY_CMD");
+    if (!base || !*base) { SAY("steam: cannot run the lobby here (SSBU_STEAM_RELAY_CMD is not set)\n"); return 0; }
+    char cmd[2048];
+    snprintf(cmd, sizeof cmd, "%s --bind 127.0.0.1 --port %u --per-ip %d --stats 60", base, server_port, LOBBY_MAX);
+    if (!server_job) {   /* (the server ends with this bridge, however it ends) */
+        server_job = CreateJobObjectA(NULL, NULL);
+        JOBOBJECT_EXTENDED_LIMIT_INFORMATION li;
+        memset(&li, 0, sizeof li);
+        li.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        SetInformationJobObject(server_job, JobObjectExtendedLimitInformation, &li, sizeof li);
+    }
+    STARTUPINFOA si = {sizeof si};
+    PROCESS_INFORMATION pi;
+    char *env = game_environment();
+    BOOL ok = CreateProcessA(NULL, cmd, NULL, NULL, TRUE, CREATE_SUSPENDED, env, NULL, &si, &pi);
+    free(env);
+    if (!ok) { SAY("steam: cannot start the lobby server: %s\n", cmd); return 0; }
+    AssignProcessToJobObject(server_job, pi.hProcess);
+    ResumeThread(pi.hThread);
+    CloseHandle(pi.hThread);
+    server_proc = pi.hProcess;
+    Sleep(1500);   /* (its socket bound before the first packet) */
+    SAY("steam: this PC now runs the lobby for everyone in it\n");
+    return 1;
+}
+
+/* (owner) a member's datagram into the server, through that member's own socket */
+static void to_server(u64 who, const char *data, int len) {
+    int k = -1, free_slot = -1;
+    for (int i = 0; i < LOBBY_MAX; i++) {
+        if (lpeers[i].s && lpeers[i].id == who) { k = i; break; }
+        if (!lpeers[i].s && free_slot < 0) free_slot = i;
+    }
+    if (k < 0) {
+        if (free_slot < 0) return;
+        SOCKET s = udp_socket(0);
+        if (s == INVALID_SOCKET) return;
+        struct sockaddr_in a = {AF_INET, htons(server_port)};
+        a.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        connect(s, (struct sockaddr *)&a, sizeof a);
+        k = free_slot;
+        lpeers[k].id = who; lpeers[k].s = s;
+    }
+    lpeers[k].seen = GetTickCount();
+    send(lpeers[k].s, data, len, 0);
+}
+
+static void lobby_arrived(u64 from, const char *data, int len) {
+    received++;
+    if (server_owner == me_id) { if (member_allowed(from)) to_server(from, data, len); }
+    else if (from == server_owner && have_game_addr) sendto(game_sock, data, len, 0, (struct sockaddr *)&game_addr, sizeof game_addr);
+}
+
+/* the shared lobby of this build and region with the lowest id (everyone picks the same one), or 0 */
+static u64 find_shared(const char *build, const char *region) {
+    S.AddStringFilter(mm, "neosmash_lobby", build, 0);
+    S.AddStringFilter(mm, "region", region, 0);
+    S.AddDistanceFilter(mm, 3);
+    match_count = -1;
+    pending_call = S.RequestLobbyList(mm);
+    if (!wait_for(&pending_call, 15000) || match_count < 1) return 0;
+    u64 best = 0;
+    for (int i = 0; i < match_count; i++) {
+        u64 l = S.LobbyByIndex(mm, i);
+        if (S.LobbyMembers(mm, l) > 0 && (!best || l < best)) best = l;
+    }
+    return best;
+}
+
+static int enter_lobby(u64 l) {
+    joined_lobby = -1;
+    pending_call = S.JoinLobby(mm, l);
+    for (DWORD t0 = GetTickCount(); joined_lobby < 0 && GetTickCount() - t0 < 15000;) { steam_pump(); Sleep(10); }
+    return joined_lobby == 1;
+}
+
+static int run_lobby(const char *build, const char *region, int port, int argc, char **argv) {
+    char title[64];
+    snprintf(title, sizeof title, "NeoSmash %s", !_stricmp(region, "au") ? "Australia" : region);
+    me_id = S.MySteamID(S.User());
+    server_port = 39421;
+    printf("Looking for the %s lobby...\n", title);
+    fflush(stdout);
+    u64 l = find_shared(build, region);
+    if (l && !enter_lobby(l)) { SAY("steam: could not enter the %s lobby (full?); making another\n", title); l = 0; }
+    if (!l) {
+        lobby = 0;
+        pending_call = S.CreateLobby(mm, 2, LOBBY_MAX);   /* public: everyone of this build finds it */
+        if (!wait_for(&pending_call, 15000) || !lobby) { SAY("steam: the lobby could not be made\n"); return 1; }
+        S.SetLobbyData(mm, lobby, "neosmash_lobby", build);
+        S.SetLobbyData(mm, lobby, "region", region);
+        S.SetLobbyData(mm, lobby, "name", title);
+        Sleep(2000);   /* someone else may have made one at the same moment: everyone keeps the oldest */
+        u64 other = find_shared(build, region);
+        if (other && other < lobby) {
+            S.LeaveLobby(mm, lobby);
+            lobby = 0;
+            if (!enter_lobby(other)) { SAY("steam: could not enter the %s lobby\n", title); return 1; }
+        }
+    }
+    printf("In the %s lobby: %d player%s. In the game: Local Wireless - create a room, or pick one from the Rooms List.\n",
+           title, S.LobbyMembers(mm, lobby), S.LobbyMembers(mm, lobby) == 1 ? "" : "s");
+    fflush(stdout);
+    S.SetRichPresence(friends, "status", title);
+
+    u_short gport = (u_short)(port ? port : 39430);
+    game_sock = udp_socket(gport);
+    if (game_sock == INVALID_SOCKET) { SAY("steam: local port %d in use\n", gport); return 1; }
+    char value[64];
+    snprintf(value, sizeof value, "127.0.0.1:%d", gport);
+    SetEnvironmentVariableA("SSBU_NET_RELAY", value);
+    snprintf(value, sizeof value, "steam-%s", region);
+    SetEnvironmentVariableA("SSBU_NET_ROOM", value);
+    SetEnvironmentVariableA("SSBU_NET_HOST", NULL);
+    SetEnvironmentVariableA("SSBU_NET_BIND", NULL);
+    HANDLE game = argc ? start_game(argc, argv) : NULL;
+    if (argc && !game) return 1;
+
+    DWORD last_owner_check = 0, last_report = GetTickCount();
+    char buf[65536];
+    for (;;) {
+        steam_pump();
+        if (GetTickCount() - last_owner_check > 250) {   /* who runs the server: the lobby's owner */
+            last_owner_check = GetTickCount();
+            u64 owner = S.LobbyOwner(mm, lobby);
+            if (owner && owner != server_owner) {
+                if (server_owner == me_id) stop_server();
+                server_owner = owner;
+                if (owner == me_id) { if (!start_server()) break; }
+                else fprintf(stderr, "steam: the lobby runs on %s's PC\n", S.FriendName(friends, owner));
+            }
+        }
+        transport_poll(lobby_arrived);
+        fd_set rd;
+        FD_ZERO(&rd);
+        FD_SET(game_sock, &rd);
+        if (server_owner == me_id)
+            for (int i = 0; i < LOBBY_MAX; i++) if (lpeers[i].s && rd.fd_count < FD_SETSIZE) FD_SET(lpeers[i].s, &rd);
+        struct timeval tv = {0, 1000};
+        select(0, &rd, NULL, NULL, &tv);
+        struct sockaddr_in from;
+        int fl = sizeof from, n;
+        while ((n = recvfrom(game_sock, buf, sizeof buf, 0, (struct sockaddr *)&from, &fl)) > 0) {   /* this PC's game */
+            game_addr = from; have_game_addr = 1;
+            if (server_owner == me_id) to_server(me_id, buf, n);
+            else if (server_owner) { transport_send(server_owner, buf, n); sent++; }
+            fl = sizeof from;
+        }
+        if (server_owner == me_id)
+            for (int i = 0; i < LOBBY_MAX; i++) {   /* the server's answers, to each member */
+                if (!lpeers[i].s) continue;
+                while ((n = recv(lpeers[i].s, buf, sizeof buf, 0)) > 0) {
+                    if (lpeers[i].id == me_id) { if (have_game_addr) sendto(game_sock, buf, n, 0, (struct sockaddr *)&game_addr, sizeof game_addr); }
+                    else { transport_send(lpeers[i].id, buf, n); sent++; }
+                }
+                if (lpeers[i].id != me_id && GetTickCount() - lpeers[i].seen > 120000) {   /* gone two minutes */
+                    NetIdentity id = identity(lpeers[i].id);
+                    S.CloseSession(msgs, &id);
+                    closesocket(lpeers[i].s);
+                    memset(&lpeers[i], 0, sizeof lpeers[i]);
+                }
+            }
+        if (server_proc && WaitForSingleObject(server_proc, 0) == WAIT_OBJECT_0) {
+            SAY("steam: the lobby server stopped; starting it again\n");
+            CloseHandle(server_proc); server_proc = NULL;
+            if (!start_server()) break;
+        }
+        if (GetTickCount() - last_report > 30000) {
+            fprintf(stderr, "steam: %s lobby, %d players, %s; %llu sent, %llu received\n", title, S.LobbyMembers(mm, lobby),
+                    server_owner == me_id ? "running it here" : "through the owner's PC", (unsigned long long)sent, (unsigned long long)received);
+            last_report = GetTickCount();
+        }
+        if (game && WaitForSingleObject(game, 0) == WAIT_OBJECT_0) break;
+    }
+    DWORD code_out = 0;
+    if (game) GetExitCodeProcess(game, &code_out);
+    stop_server();
+    if (lobby) S.LeaveLobby(mm, lobby);
+    S.Shutdown();
+    return (int)code_out;
+}
+
 static int usage(void) {
-    fprintf(stderr, "usage: neosmash_steam host|join|list [--code CODE] [--room NAME] [--port N] --build ID "
+    fprintf(stderr, "usage: neosmash_steam host|join|lobby|list|rooms [--code CODE] [--region au] [--room NAME] [--port N] --build ID "
                     "[--udp-test LOCAL:PEER] -- <game command>\n");
     return 2;
 }
 
 int main(int argc, char **argv) {
     if (argc < 2) return usage();
-    const char *mode = argv[1], *code = "", *room = "steam", *build = "";
+    const char *mode = argv[1], *code = "", *room = "steam", *build = "", *region = "au";
     int port = 0, test_local = 0, test_remote = 0, dash = argc;
     for (int i = 2; i < argc; i++) {
         if (!strcmp(argv[i], "--")) { dash = i + 1; break; }
         if (i + 1 >= argc) return usage();
         if (!strcmp(argv[i], "--code")) code = argv[++i];
         else if (!strcmp(argv[i], "--room")) room = argv[++i];
+        else if (!strcmp(argv[i], "--region")) region = argv[++i];
         else if (!strcmp(argv[i], "--port")) port = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--build")) build = argv[++i];
         else if (!strcmp(argv[i], "--udp-test")) { udp_test = 1; sscanf(argv[++i], "%d:%d", &test_local, &test_remote); }
         else return usage();
     }
     hosting = !strcmp(mode, "host");
-    if (!hosting && strcmp(mode, "join") && strcmp(mode, "list") && strcmp(mode, "rooms")) return usage();
+    if (!hosting && strcmp(mode, "join") && strcmp(mode, "list") && strcmp(mode, "rooms") && strcmp(mode, "lobby")) return usage();
     if (!*build) { fprintf(stderr, "steam: --build (the game's build id, version.txt) is needed\n"); return 2; }
     snapshot_environment();   /* (before Steam adds its own: see game_environment) */
     WSADATA wsa;
@@ -478,6 +686,10 @@ int main(int argc, char **argv) {
     SetEnvironmentVariableA("SSBU_NET_NAME", name);
     SetEnvironmentVariableA("SSBU_NET_DIRECT", "0");   /* (Steam already finds the direct path) */
     SetEnvironmentVariableA("SSBU_NET_UPNP", "0");
+    if (!strcmp(mode, "lobby")) {
+        if (udp_test) { SAY("steam: the shared lobby needs Steam (no --udp-test)\n"); return 2; }
+        return run_lobby(build, region, port, dash < argc ? argc - dash : 0, argv + dash);
+    }
     char value[64];
     if (hosting) {
         relay_port = (u_short)(port ? port : 39420);

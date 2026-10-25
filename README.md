@@ -23,6 +23,7 @@ The game's log is `build/play.log`.
 | --- | --- |
 | Play offline | `Play SSBU Offline.bat` |
 | Play online (lobby in `online_server.txt`) | `Play SSBU.bat` |
+| Play online in the shared Steam lobby (Australia) | `Play SSBU Steam.bat` |
 | Netplay with friends | `Host SSBU Netplay.bat`, `Join SSBU Netplay.bat` ([NETPLAY.md](NETPLAY.md)) |
 | Compile all game shaders (once per game version) | `Prepare Shaders.bat` |
 | Unlock base fighters, with a backup | `Unlock All Fighters.bat`, while the game is closed |
