@@ -61,9 +61,16 @@ Repository: `https://github.com/crusader290/NeoSmash` (private; `main`), forked 
 there; generated artifacts, game data, saves and caches stay local and ignored. Do not reset or
 clean this working tree. See [MANIFEST.md](MANIFEST.md).
 
-Current game: 13.0.3; main build ID
-`730C2141EEBF9885E4857E7E50EAE441D46925DF`. Game inputs are supplied by the user;
-this source project does not supply keys, firmware or game assets.
+Current game: **13.0.5, the only supported version from 2026-10-25**; main build ID
+`21450C647B8C5940ED5B68218EA128FD3C5D597D`. Built from `H:\Games\Super Smash Bros Ultimate 13.0.5\`:
+the unchanged base NSP (13.0.3 cartridge, NCA `d0aff042…`, hard-linked), the 13.0.5 update
+converted from `.nsz` by `tools/nsz.py` (SHA-256 verified), and 99 DLC (hard links). The update is
+applied over that merged base as a layered RomFS: 1,074,276 of 1,074,277 blocks match the update's
+hash tree; the one 16 KB block left (`romfs.unverified.txt`) lies in data.arc's shared-data section,
+not in a fighter module or a shader container. The 13.0.3 inputs (exefs, nro, romfs/aoc configs,
+game_source) are kept in `H:\Workspace\NeoSmash\retired-13.0.3\`. The save is the "Custom Complete
+Fighters" one; the previous save is in `save_backups/save-13.0.3-before-13.0.5-20261025/`.
+Game inputs are supplied by the user; this source project does not supply keys, firmware or game assets.
 
 ## Machine and constraints
 

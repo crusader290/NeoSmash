@@ -97,6 +97,11 @@ You need these files from your own Switch:
 > [!TIP]
 > **With `Install NeoSmash.bat` or `Build NeoSmash.bat` you don't need `romfs.bin`.** Put the game (a game card dump `.xci`, an `.nsp`, or its `.nca` files; or point at the folder yuzu or Ryujinx installed it in), your update's `.nsp` if you have one, and your DLC `.nsp` files (loose, or in a `dlc` folder) into one folder. They find the program, decrypt what needs it, and apply the update over the game themselves. Decrypting the game needs about 15 GB more space and the update about 4 GB; both take a few minutes. The game as first released (version 1.0.0) is the best base for an update: it applies exactly.
 
+> **Compressed `.nsz` files** (an `.nsp` packed smaller) are not read directly. Turn each into an `.nsp` first:
+> `python tools/nsz.py "<file>.nsz" "<file>.nsp"`. It needs no keys, takes seconds to minutes, and checks every
+> rebuilt NCA against its name (its SHA-256), so the `.nsp` is exactly the original. A base that has not changed
+> since an earlier dump (same NCA name) does not need converting again.
+
 <details>
 <summary><strong>What do "update applied" and "unencrypted" mean?</strong></summary>
 

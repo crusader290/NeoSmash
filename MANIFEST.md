@@ -7,7 +7,7 @@ redistributable game package or a cryptographic integrity manifest.
 
 | Item | State on 2026-10-21 |
 | --- | --- |
-| Game | 13.0.3; build ID `730C2141EEBF9885E4857E7E50EAE441D46925DF` |
+| Game | 13.0.5 (the only supported version); main build ID `21450C647B8C5940ED5B68218EA128FD3C5D597D`; base 13.0.3 cartridge + 13.0.5 update (layered RomFS), 99 DLC |
 | Compilation inventory | 65,050 reflected entries: 18,519 VS / 46,518 PS / 13 CS; cache version 10 |
 | Discovery | 26,639 source blobs / 64,940 static keys / 803 known containers, every byte alignment |
 | Observed-only history | 4,904 entries; predictions never persisted as played history |
@@ -82,6 +82,7 @@ Some are untracked. Include them when transferring source work; do not rely on
 | `tools/prepare_startup_shaders.py` | Publishes observed-only history, validates predictions separately, then merges active startup selection without promoting unused timestamps |
 | `tools/audit_shader_archive.py`, `tools/check_shader_manifest.py` | Exhaustive archive audit and GPU-free bytecode reflection |
 | `tools/effects-dxvk.conf` | Local DXVK profile |
+| `tools/nsz.py` | `.nsz` to `.nsp`, every NCA checked against its name |
 | `tools/container_index.py` | Index of which shaders each data.arc container holds (`dump/effect_profiles/containers/`) |
 | `tools/warm_native_cache.py` | Batched, resumable GPU driver cache warming for `build/ssbu.exe` |
 | `tools/play_setup.bat` | Shared pre-launch step of every play launcher |
@@ -93,6 +94,7 @@ Some are untracked. Include them when transferring source work; do not rely on
 | `tests/test_effect_profile.py`, `tests/test_startup_shaders.py` | Bounded recent-fighter selection, manifest/wait policy, observed-history and unplayed-timestamp preservation |
 | `tests/test_gpu_state_cache.*`, `tests/test_gpu_upload_snapshot.py` | Cache/snapshot invariants |
 | `tests/test_gpu_prewarm_compute.c`, `tests/test_unlock.py` | Compute preparation and save safety |
+| `tests/test_nsz.py` | NSZ conversion, stream and block modes, wrong rebuild refused |
 | `tests/test_container_index.py` | Container index format and program-to-name mapping |
 | `tests/test_native_warm.py` | Warm list order, resume, failure skip, DXVK-change restart |
 

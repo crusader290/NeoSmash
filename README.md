@@ -1,7 +1,7 @@
 # NeoSmash / NeoSmash — local Windows build
 
 This checkout builds the user's own Super Smash Bros. Ultimate dump as a Windows
-program. The current installation is **13.0.3**. It renders through DXVK, with the GPU
+program. The supported game version is **13.0.5** (from 2026-10-25; 13.0.3 before). It renders through DXVK, with the GPU
 driver's shader cache warmed ahead of time; this removed the mid-match first-use freezes
 (see [the root cause](docs/NATIVE_DRIVER_CACHE.md)). Shaders are also prepared from the game's own
 containers in the background as it loads them, and loading screens wait for them
