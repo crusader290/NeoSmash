@@ -14,6 +14,7 @@
  *   neosmash_steam host [--code CODE] [--room NAME] [--port 39420] --build ID -- <game command>
  *   neosmash_steam join [--code CODE] [--port 39430] --build ID -- <game command>
  *   neosmash_steam list --build ID
+ *   neosmash_steam rooms --build ID          (every open room of this build: code, host, players)
  *
  * Steam runs it as Spacewar (app 480, Valve's test app): the Steam client must be running and
  * signed in; steam_api64.dll (Valve's, copied from an installed game by tools/steam_setup.py) and
@@ -438,7 +439,7 @@ int main(int argc, char **argv) {
         else return usage();
     }
     hosting = !strcmp(mode, "host");
-    if (!hosting && strcmp(mode, "join") && strcmp(mode, "list")) return usage();
+    if (!hosting && strcmp(mode, "join") && strcmp(mode, "list") && strcmp(mode, "rooms")) return usage();
     if (!*build) { fprintf(stderr, "steam: --build (the game's build id, version.txt) is needed\n"); return 2; }
     snapshot_environment();   /* (before Steam adds its own: see game_environment) */
     WSADATA wsa;
@@ -455,6 +456,21 @@ int main(int argc, char **argv) {
         printf(l ? "found a room\n" : "no room found\n");
         S.Shutdown();
         return l ? 0 : 1;
+    }
+    if (!strcmp(mode, "rooms")) {   /* every open room of this game build: code, host, players */
+        S.AddStringFilter(mm, "neosmash", build, 0);
+        S.AddDistanceFilter(mm, 3);
+        match_count = -1;
+        pending_call = S.RequestLobbyList(mm);
+        if (!wait_for(&pending_call, 15000)) { SAY("steam: no answer from Steam's lobby list\n"); return 1; }
+        printf("%d room%s for this game build:\n", match_count, match_count == 1 ? "" : "s");
+        for (int i = 0; i < match_count; i++) {
+            u64 l = S.LobbyByIndex(mm, i);
+            printf("  code %-8s host %-24s %d player%s\n", S.GetLobbyData(mm, l, "code"), S.GetLobbyData(mm, l, "host"),
+                   S.LobbyMembers(mm, l), S.LobbyMembers(mm, l) == 1 ? "" : "s");
+        }
+        S.Shutdown();
+        return 0;
     }
 
     char name[64];
@@ -498,6 +514,17 @@ int main(int argc, char **argv) {
             if (strcmp(theirs, build)) { SAY( "steam: that room is another game version (%s)\n", theirs); return 1; }
             room = _strdup(S.GetLobbyData(mm, lobby, "room"));
             host_id = S.LobbyOwner(mm, lobby);
+            if (host_id == S.MySteamID(S.User())) {
+                /* Steam does not carry messages from an account to itself: a second game here would
+                 * wait for a host it can never reach */
+                SAY("steam: that room is hosted by this same Steam account (%s). Steam cannot connect an account\n"
+                    "to itself: join from another PC signed in to another Steam account. To try netplay on one PC,\n"
+                    "use Host SSBU Netplay.bat and Join SSBU Netplay.bat with the address 127.0.0.1.\n",
+                    S.PersonaName(friends));
+                S.LeaveLobby(mm, lobby);
+                S.Shutdown();
+                return 1;
+            }
             printf("Joined %s's room.\n", S.GetLobbyData(mm, lobby, "host"));
             S.SetRichPresence(friends, "status", "NeoSmash: in a friend's room");
         }
