@@ -67,9 +67,10 @@ each launch. On a first run they load at their first draw.
 | `SSBU_SHADER_PREWARM=0` | on | No startup preparation and no container preparation |
 | `SSBU_EFFECT_MANIFEST` | `startup-selected` | Another startup list |
 | `SSBU_CONTAINER_PREP=0` | on | No container preparation (and no barrier) |
+| `SSBU_LOAD_BARRIER_DRAWS` | 150 | Frames with more draws are menus and are never held (loading screens measured 6-59 draws; character select about 3,000) |
 | `SSBU_LOAD_BARRIER=0` / `=1` | on offline, off in netplay | The barrier off, or forced on in netplay |
 | `SSBU_CONTAINER_PREP_MAX` | 1000 | Largest container queued whole |
-| `SSBU_CONTAINER_PREP_MB` | 8192 | Private memory above which no more containers are queued |
+| `SSBU_CONTAINER_PREP_MB` | 40% of the RAM, at least 8192 | Private memory above which no more containers are queued |
 | `SSBU_SHADER_WAIT_MS` | 4 | Per frame: how long draws wait for a shader still loading from the disk cache instead of being skipped (pop-in); 0 never waits |
 | `SSBU_CONTAINER_INDEX` | `dump/effect_profiles/containers/index.bin` | Another index |
 
@@ -97,3 +98,23 @@ cache are now waited for, up to `SSBU_SHADER_WAIT_MS` (4 ms) a frame; compute sh
 were. Check (`build/wait-smoke-20261025/`): 6 fight windows, worst frame 17.5 ms, 0 slow
 Presents, 0 skipped draws, 7 unprepared shaders, 5.2 ms of waiting in all. The session's new
 shaders join the startup list at the next launch.
+
+## Transitions (2026-10-25, later)
+
+A session's transitions still hitched. Three causes, three changes:
+
+- **Fighter modules.** Each fighter's code module (`lua2cpp_<fighter>`) took 8-18 ms to load on the
+  game's thread, 5-13 ms of it re-sorting the table of all ~170,000 recompiled functions.
+  `runtime/host.c` now sorts only the new module's entries and merges them in: 1.5-3 ms a fighter
+  (the shared `common` and `item` modules, once at boot, about 8-10 ms). The `[ro] loaded` log line
+  now gives each load's time.
+- **The barrier froze menus.** Character select, with no compute, counted as "not a fight", so
+  choosing fighters (which loads their effects) froze it for 0.4-0.8 s. Frames with more than 150
+  draws are no longer held; loading screens are 6-59 draws.
+- **The memory budget** (fixed 8 GB) was reached in one session on a 32 GB PC; it is now 40% of
+  the RAM, at least 8 GB.
+
+Check (`build/barrier-final/`): 2 loading screens held (24 and 6 draws; 719 and 406 ms), the
+3,019-draw menu not held, fighter modules 1.6-2.5 ms, 11 fight windows with the worst frame
+17.5 ms and nothing over 25 ms, 0 slow Presents. Left: the boot (one 1.3 s interval in the first
+10 s, in every run since the start) and one 116 ms interval around the menus.

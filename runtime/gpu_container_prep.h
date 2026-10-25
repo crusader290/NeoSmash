@@ -7,14 +7,16 @@
  * game draws with them. tools/container_index.py says which disk-cache files each container's
  * programs are, and where the container lies in data.arc (dump/effect_profiles/containers/).
  *
- * The barrier: a frame presented outside a fight (no compute dispatch in it: fights skin their
- * fighters with compute every frame) waits while announced shaders are still being made, and
+ * The barrier: a loading screen - a frame with no compute dispatch (fights skin their fighters
+ * with compute every frame) and at most SSBU_LOAD_BARRIER_DRAWS draws (150; loading screens
+ * measured 6-59, character select thousands, which must not freeze while players pick) - waits
+ * while announced shaders are still being made, and
  * then for DXVK's shader workers to go quiet, at most 20 s. So the game leaves a loading screen
  * only once what it loaded is ready, and the fight meets none of it for the first time. A fight
  * is never held: what a fight reads is prepared in the background meanwhile.
  *
  * Default on under DXVK with an index. SSBU_CONTAINER_PREP=0 turns both off, SSBU_LOAD_BARRIER=0
- * the barrier only; SSBU_CONTAINER_PREP_MB (default 8192) is the private memory above which no
+ * the barrier only; SSBU_CONTAINER_PREP_MB (default 40% of the RAM, at least 8192) is the private memory above which no
  * more containers are queued (each queued shader keeps an object until the game takes it).
  * SSBU_CONTAINER_PREP_MAX (default 1000): larger containers are not queued whole. The ten global
  * shader libraries the game reads at boot hold 3,000-4,000 variants each (pixel programs times
@@ -43,6 +45,8 @@ static struct {
     u64 budget;
     u32 max;
     u64 held_ms, held_frames, longest_ms, timeouts;
+    u32 max_draws;                 /* frames with more draws are menus, not loading screens: never held */
+    int log_draws;
     volatile u64 held_ns;          /* all of it, for scripted input (hle_hid.c) */
 } prep;
 
@@ -84,8 +88,15 @@ static BOOL CALLBACK prep_load(PINIT_ONCE o, PVOID p, PVOID *c) {
     if (!ok) { fprintf(stderr, "[gfx] container preparation: %s is damaged; ignored\n", path); return TRUE; }
     const char *mb = getenv("SSBU_CONTAINER_PREP_MB");
     prep.budget = (u64)(mb ? atoi(mb) : 8192) << 20;
+    if (!mb) {   /* (by default 40% of the PC's memory, at least 8 GB: a 32 GB PC reached 8 GB in one session) */
+        MEMORYSTATUSEX ms = {sizeof ms};
+        if (GlobalMemoryStatusEx(&ms) && ms.ullTotalPhys / 10 * 4 > prep.budget) prep.budget = ms.ullTotalPhys / 10 * 4;
+    }
     const char *mx = getenv("SSBU_CONTAINER_PREP_MAX");
     prep.max = mx ? (u32)atoi(mx) : 1000;
+    const char *md = getenv("SSBU_LOAD_BARRIER_DRAWS");
+    prep.max_draws = md ? (u32)atoi(md) : 150;   /* (loading screens measured 6-59 draws; a held menu, 3,071) */
+    prep.log_draws = md != NULL;
     const char *b = getenv("SSBU_LOAD_BARRIER");
     prep.barrier = !b || atoi(b);
     /* Netplay: the other players' games run on while one is held, and a room or a battle's start
@@ -176,11 +187,18 @@ static void prep_start(void) {
 
 /* (gfx_present, before the swap chain's Present) hold a loading screen until what it loaded is ready */
 static void prep_barrier(void) {
-    static u64 last_dispatched;
-    u64 dispatched = gfx_stat_dispatched - last_dispatched;
+    static u64 last_dispatched, last_drawn;
+    u64 dispatched = gfx_stat_dispatched - last_dispatched, drawn = gfx_stat_drawn - last_drawn;
     last_dispatched = gfx_stat_dispatched;
+    last_drawn = gfx_stat_drawn;
     if (!prep.on || !prep.barrier || dispatched) return;   /* (a fight: never held) */
     if (InterlockedCompareExchange(&prewarm_done, 0, 0) >= prewarm_total) return;
+    if (drawn > prep.max_draws) {   /* a menu (character select): not held, its work goes on behind it */
+        static u64 noted;
+        if (prep.log_draws || noted++ < 3)
+            fprintf(stderr, "[gfx] loading barrier: a frame of %llu draws not held (a menu, over %u)\n", (unsigned long long)drawn, prep.max_draws);
+        return;
+    }
     u64 start = GetTickCount64(), deadline = start + 20000;
     while (InterlockedCompareExchange(&prewarm_done, 0, 0) < prewarm_total && GetTickCount64() < deadline) Sleep(2);
     int timed_out = InterlockedCompareExchange(&prewarm_done, 0, 0) < prewarm_total;
@@ -209,8 +227,8 @@ static void prep_barrier(void) {
         fprintf(stderr, "[gfx] loading barrier: TIME-OUT after 20 s with %ld shaders still being made; presenting\n",
                 (long)(prewarm_total - prewarm_done));
     }
-    else if (held >= 50) fprintf(stderr, "[gfx] loading barrier: a loading frame held %llu ms until its containers' shaders were ready\n",
-                                  (unsigned long long)held);
+    else if (held >= 50) fprintf(stderr, "[gfx] loading barrier: a loading frame (%llu draws) held %llu ms until its containers' shaders were ready\n",
+                                  (unsigned long long)drawn, (unsigned long long)held);
 }
 
 /* One line for the statistics log. */

@@ -61,6 +61,23 @@ static int by_host_cmp(const void *a, const void *b) {
     return x < y ? -1 : x > y;
 }
 
+/* (a module loaded later) by_host[0, sorted) is in order, the entries after it are the new
+ * module's: sort just those and merge them in from the back, in place. Sorting the whole table
+ * again (~170,000 entries) took 5-13 ms of each fighter module's load, on the game's thread,
+ * and a match's transition loads several. */
+static void by_host_merge(u32 sorted) {
+    u32 k = by_host_count - sorted;
+    if (!k) return;
+    qsort(by_host + sorted, k, sizeof *by_host, by_host_cmp);
+    struct HostFn *tail = malloc(sizeof *tail * k);
+    if (!tail) { qsort(by_host, by_host_count, sizeof *by_host, by_host_cmp); return; }
+    memcpy(tail, by_host + sorted, sizeof *tail * k);
+    u32 i = sorted, j = k, w = by_host_count;
+    while (j)
+        by_host[--w] = i && by_host[i - 1].host > tail[j - 1].host ? by_host[--i] : tail[--j];
+    free(tail);
+}
+
 const char *rt_describe(u64 addr, char *buf, size_t n) {
     for (u32 m = 0; m < module_count; m++)
         if (addr - modules[m]->base < modules[m]->image_size) {
@@ -784,16 +801,25 @@ u64 rt_load_nro(Cpu *c, u64 image) {
     if (!mod || module_count == MAX_MODULES) { ReleaseSRWLockExclusive(&lock); return 0; }
     u32 m = module_count;
     modules[m] = mod;
+    LARGE_INTEGER t0, t1, t2, t3, f;
+    QueryPerformanceFrequency(&f);
+    QueryPerformanceCounter(&t0);
+    u32 sorted = by_host_count;
     map_module(m, rt_data_dir);
-    qsort(by_host, by_host_count, sizeof *by_host, by_host_cmp);
+    QueryPerformanceCounter(&t1);
+    by_host_merge(sorted);
     publish_exports(m);
     u32 relocs = bind_module(m);
     module_count++;
+    QueryPerformanceCounter(&t2);
     ReleaseSRWLockExclusive(&lock);
-    printf("[ro] loaded %s at %#llx: %u functions, %u exports, %u symbol relocations\n",
-           mod->name, mod->base, mod->func_count, mod->export_count, relocs);
-    fflush(stdout);
     if (mod->init != mod->base) rt_call(c, mod->init);
+    QueryPerformanceCounter(&t3);
+    double ms = 1000.0 / f.QuadPart;   /* (the game waits for all of it: a fighter's modules load at a transition) */
+    printf("[ro] loaded %s at %#llx: %u functions, %u exports, %u symbol relocations in %.1f ms (map %.1f, link %.1f, init %.1f)\n",
+           mod->name, mod->base, mod->func_count, mod->export_count, relocs, (t3.QuadPart - t0.QuadPart) * ms,
+           (t1.QuadPart - t0.QuadPart) * ms, (t2.QuadPart - t1.QuadPart) * ms, (t3.QuadPart - t2.QuadPart) * ms);
+    fflush(stdout);
     return mod->base;
 }
 

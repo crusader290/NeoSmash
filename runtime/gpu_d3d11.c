@@ -1042,7 +1042,7 @@ static DWORD WINAPI prewarm_main(void *unused) {
 #include "gpu_prewarm_driver.h"
 #include "gpu_prewarm_compute.h"
 #include "gpu_native_warm.h"
-extern u64 gfx_stat_dispatched;
+extern u64 gfx_stat_dispatched, gfx_stat_drawn;
 #include "gpu_container_prep.h"
 
 /* Opt-in startup gate. Hold the created objects until their actual game use. */
