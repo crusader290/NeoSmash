@@ -70,6 +70,7 @@ each launch. On a first run they load at their first draw.
 | `SSBU_LOAD_BARRIER=0` / `=1` | on offline, off in netplay | The barrier off, or forced on in netplay |
 | `SSBU_CONTAINER_PREP_MAX` | 1000 | Largest container queued whole |
 | `SSBU_CONTAINER_PREP_MB` | 8192 | Private memory above which no more containers are queued |
+| `SSBU_SHADER_WAIT_MS` | 4 | Per frame: how long draws wait for a shader still loading from the disk cache instead of being skipped (pop-in); 0 never waits |
 | `SSBU_CONTAINER_INDEX` | `dump/effect_profiles/containers/index.bin` | Another index |
 
 With `SSBU_INPUT_RELATIVE=1` (test scripts), the time the barrier holds frames doesn't count on
@@ -82,3 +83,17 @@ the script's clock, so menu inputs land on the screens they were written for.
   90 s and was killed at its time limit. Two later runs with the watchdog on (220 s and 300 s) did
   not reproduce it, and no freeze report was written; its cause is **not established**. Another run
   was closed at 68 s by a window close request of unknown origin (no crash).
+
+## Draws wait briefly for shaders loading from the disk cache (2026-10-25, 13.0.5)
+
+A first match on a new stage (a Pikmin stage, the user's session
+`build/logs/play.13.0.5-pikmin-glitch-20261025.log`) showed small visual glitches. The log has no
+translation or compile failures. It does show 204 shaders not in the startup list (89 only in
+large containers read at boot, among them a 1,951-variant stage library; 115 from containers read
+mid-fight) and one window with 314 skipped draws per second: a draw is skipped until its shader
+is ready, which shows as something missing or popping in. A shader compiled before is ready in
+about a millisecond once the driver's cache is warm, so vertex and pixel shaders from the disk
+cache are now waited for, up to `SSBU_SHADER_WAIT_MS` (4 ms) a frame; compute shaders already
+were. Check (`build/wait-smoke-20261025/`): 6 fight windows, worst frame 17.5 ms, 0 slow
+Presents, 0 skipped draws, 7 unprepared shaders, 5.2 ms of waiting in all. The session's new
+shaders join the startup list at the next launch.

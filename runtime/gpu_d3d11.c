@@ -680,6 +680,7 @@ typedef struct Shader {
 static Shader **shader_cache;
 static u32 shader_count, shader_cap;
 u64 gfx_stat_shaders, gfx_stat_shader_failures;
+static double gfx_stat_shader_wait_ms;   /* draws waiting for a cached shader (find_shader_ex), in all */
 static volatile LONG compiles_pending;
 
 /* The compiler threads: a queue of cache loads, one of compiles. Big stacks (the driver's
@@ -1269,6 +1270,28 @@ static Shader *find_shader_ex(u64 g, int stage, u32 vs_outputs, const CbBinding 
      * leaves its outputs (skinned vertices) unwritten for a frame */
     if (stage == SHADER_COMPUTE && s->cached)
         for (u64 until = GetTickCount64() + 250; s->state == 0 && GetTickCount64() < until;) SwitchToThread();
+    /* So is a vertex or pixel program compiled before, within a few ms a frame: from the disk
+     * cache, with the driver's cache warm (tools/warm_native_cache.py), it is ready in about a
+     * millisecond, and a skipped draw shows as something missing or popping in for a frame or
+     * more. The budget keeps a burst of first uses from becoming a hitch: past it, draws wait no
+     * more that frame and are skipped as before. SSBU_SHADER_WAIT_MS (default 4; 0: never wait). */
+    else if (stage != SHADER_COMPUTE && s->cached) {
+        static double budget_ms = -1, used_ms;
+        static u64 frame;
+        if (budget_ms < 0) budget_ms = getenv("SSBU_SHADER_WAIT_MS") ? atof(getenv("SSBU_SHADER_WAIT_MS")) : 4.0;
+        if (frame != gfx_stat_presented) { frame = gfx_stat_presented; used_ms = 0; }
+        LARGE_INTEGER t0, t, f;
+        QueryPerformanceCounter(&t0);
+        QueryPerformanceFrequency(&f);
+        double waited = 0;
+        while (s->state == 0 && used_ms + waited < budget_ms) {
+            SwitchToThread();
+            QueryPerformanceCounter(&t);
+            waited = (t.QuadPart - t0.QuadPart) * 1000.0 / f.QuadPart;
+        }
+        used_ms += waited;
+        gfx_stat_shader_wait_ms += waited;
+    }
     return s;
 }
 
@@ -3861,6 +3884,7 @@ void gfx_present(u64 guest, u32 width, u32 height) {
                 fprintf(stderr, "[stats] effect profile: %llu new shader objects reused, %llu requests without a prepared object (cumulative)\n",
                         prewarm_profile_hits, prewarm_profile_misses);
             prep_report();
+            fprintf(stderr, "[stats] draws waited %.1f ms in all for shaders loading from the disk cache\n", gfx_stat_shader_wait_ms);
         }
         last_ns = now; last_presented = gfx_stat_presented; last_drawn = gfx_stat_drawn;
         last_dispatched = gfx_stat_dispatched; last_skipped = gfx_stat_skipped; last_watch = gfx_stat_watch_us;
