@@ -2,7 +2,7 @@
  * packs them) into the renderer's disk cache, translated and compiled exactly as the renderer
  * would, so that a program's first use loads its DXBC instead of compiling it.
  *
- * Usage: shaderaot <pack> <cache dir> <part> <parts> [--dry] [--keys <file>]
+ * Usage: shaderaot <pack> <cache dir> <part> <parts> [--dry] [--keys <file>] [--hashes <file>]
  *   Every process translates all vertex programs (their outputs are the paired pixel programs'
  *   inputs) and compiles the programs whose shader hash is <part> modulo <parts>. --dry translates only
  *   and prints the cache key of each program ("vs <hash>", "ps <hash> <vs outputs>"); --keys
@@ -10,6 +10,8 @@
  *   say how far it is, in keys, and a last line what it did.
  *   --source-report <file> records program index, stage, hash, code size and unsupported
  *   instruction diagnostics (tab separated). Intended for auditing speculative candidates.
+ *   --hashes <file> writes "<record>\t<vs|ps>\t<hash>" for every record and exits, translating
+ *   nothing (tools/container_index.py: which container's programs are which cache keys).
  *
  * Pack: "SAOT", u32 count; then per program u32 stage (0 vertex, 1 pixel), u32 length, u32 pairs,
  * u32 pair[pairs] (the vertex programs found before it in its containers), then its bytes
@@ -177,9 +179,13 @@ int main(int argc, char **argv) {
     const char *dir = argv[2];
     u32 part = (u32)atoi(argv[3]), parts = (u32)atoi(argv[4]);
     int dry = 0;
-    FILE *source_report = NULL;
+    FILE *source_report = NULL, *hashes = NULL;
     for (int a = 5; a < argc; a++) {
         if (!strcmp(argv[a], "--dry")) dry = 1;
+        else if (!strcmp(argv[a], "--hashes") && a + 1 < argc) {   /* each record's cache hash, nothing translated */
+            hashes = fopen(argv[++a], "w");
+            if (!hashes) { fprintf(stderr, "cannot open hash list\n"); return 1; }
+        }
         else if (!strcmp(argv[a], "--source-report") && a + 1 < argc) {
             source_report = fopen(argv[++a], "w");
             if (!source_report) { fprintf(stderr, "cannot open source report\n"); return 1; }
@@ -225,6 +231,19 @@ int main(int argc, char **argv) {
             fprintf(stderr, "ignored invalid SPH in pack record %u\n", i);
             prog[i].length = 0;   /* preserve pair indices; neither translate nor compile this record */
         }
+    }
+    if (hashes) {   /* "<record>\t<vs|ps>\t<hash>" for every valid record (tools/container_index.py) */
+        for (u32 i = 0; i < total; i++) {
+            Program *p = &prog[i];
+            if (p->length <= 0x50) continue;
+            if (setjmp(on_fatal)) continue;
+            u32 size = shader_size(p->bytes, p->length);
+            if (size <= 0x50) continue;
+            fprintf(hashes, "%u\t%s\t%016llx\n", i, p->stage == SHADER_VERTEX ? "vs" : "ps",
+                    (unsigned long long)shader_program_hash(p->bytes, size));
+        }
+        fclose(hashes);
+        return 0;
     }
     ShaderInfo info;
     char path[1200], name[64];

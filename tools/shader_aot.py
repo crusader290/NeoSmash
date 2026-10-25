@@ -111,12 +111,14 @@ HEADER_PREFIX = re.compile(rb"[\x61\x62][\x04\x14\x44\x54\x84\x94\xc4\xd4][\x06\
 
 
 def find_programs(arc, scan_stats=None, *, entries=None, all_alignments=False,
-                  byte_alignments=False, on_container=None):
-    """Distinct programs: list of [stage, bytes, set of paired vertex program ids]."""
+                  byte_alignments=False, on_container=None, on_programs=None):
+    """Distinct programs: list of [stage, bytes, set of paired vertex program ids].
+    on_programs(entry, program ids): each container read, with the programs found in it."""
     programs, ids = [], {}
     unread = 0
     rejected_headers = 0
-    for ext, (off, stored, size, flags) in (containers(arc) if entries is None else entries):
+    for entry in (containers(arc) if entries is None else entries):
+        ext, (off, stored, size, flags) = entry
         if on_container:
             on_container(ext, size)
         if not stored or not size:   # (an empty file - data.arc has a few, marked compressed: nothing in it)
@@ -157,6 +159,8 @@ def find_programs(arc, scan_stats=None, *, entries=None, all_alignments=False,
         # game has only a few dozen distinct vertex output masks, so this stays small)
         for pid in here[1]:
             programs[pid][2].update(here[0])
+        if on_programs:
+            on_programs(entry, here[0] + here[1])
     if scan_stats is not None:
         scan_stats["invalid_headers"] = rejected_headers
     return programs, unread

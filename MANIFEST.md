@@ -50,6 +50,7 @@ executable remains older than the experimental build. See
 | `docs/HANDOFF_VALIDATION.md` | Latest test evidence and unresolved limitations |
 | `docs/SHADER_COVERAGE_AUDIT.md` | All-file audit, expanded inventory and current shader counts |
 | `docs/PRESENT_STALL_FOLLOWUP.md` | Latest user log, descriptor trial and bounded predictive preparation |
+| `docs/CONTAINER_PREPARATION.md` | Container preparation, loading barrier, default-on startup preparation |
 | `docs/NATIVE_DRIVER_CACHE.md` | First-use stall root cause (driver library compile) and the native warm-up |
 | `README-UPSTREAM.md` | Preserved upstream Windows README, before local rewrite |
 | `README-LINUX.md` | Linux scope and links; not validated by this Windows effort |
@@ -71,6 +72,7 @@ Some are untracked. Include them when transferring source work; do not rely on
 | `runtime/gpu_prewarm_manifest.h` | Canonical safe shader basenames |
 | `runtime/gpu_prewarm_driver.h` | Shared preparation limits and driver-worker heuristic |
 | `runtime/gpu_prewarm_compute.h` | Zero-work indirect compute preparation |
+| `runtime/gpu_container_prep.h` | Container preparation (data.arc reads -> background shader jobs) and the loading barrier |
 | `runtime/gpu_native_warm.h` | `ssbu.exe --native-warm`: windowless driver-cache warming, no game boot |
 | `runtime/gpu_state_cache.h` | Exact descriptor caches |
 | `runtime/gpu_upload_snapshot.h` | Bounded exact-byte composed-upload snapshots |
@@ -80,6 +82,7 @@ Some are untracked. Include them when transferring source work; do not rely on
 | `tools/prepare_startup_shaders.py` | Publishes observed-only history, validates predictions separately, then merges active startup selection without promoting unused timestamps |
 | `tools/audit_shader_archive.py`, `tools/check_shader_manifest.py` | Exhaustive archive audit and GPU-free bytecode reflection |
 | `tools/effects-dxvk.conf` | Local DXVK profile |
+| `tools/container_index.py` | Index of which shaders each data.arc container holds (`dump/effect_profiles/containers/`) |
 | `tools/warm_native_cache.py` | Batched, resumable GPU driver cache warming for `build/ssbu.exe` |
 | `tools/play_setup.bat` | Shared pre-launch step of every play launcher |
 | `tools/find_python.bat` | Prefer installed local virtual environment |
@@ -90,6 +93,7 @@ Some are untracked. Include them when transferring source work; do not rely on
 | `tests/test_effect_profile.py`, `tests/test_startup_shaders.py` | Bounded recent-fighter selection, manifest/wait policy, observed-history and unplayed-timestamp preservation |
 | `tests/test_gpu_state_cache.*`, `tests/test_gpu_upload_snapshot.py` | Cache/snapshot invariants |
 | `tests/test_gpu_prewarm_compute.c`, `tests/test_unlock.py` | Compute preparation and save safety |
+| `tests/test_container_index.py` | Container index format and program-to-name mapping |
 | `tests/test_native_warm.py` | Warm list order, resume, failure skip, DXVK-change restart |
 
 ## Local generated/runtime files

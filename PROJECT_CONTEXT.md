@@ -2,7 +2,13 @@
 
 Updated 2026-10-21 (Australia/Brisbane). Read this before changing the renderer.
 
-**Latest (2026-10-21, after 08:00): stutter root cause and fix.** See
+**Latest (2026-10-25): container preparation and loading barrier** ([docs/CONTAINER_PREPARATION.md](docs/CONTAINER_PREPARATION.md)).
+When the game reads a shader container from data.arc, its shaders are queued to background threads,
+and a loading screen (a frame without compute) waits for them; the startup preparation is on by
+default inside the game. Fights with play history: 0 unprepared first-use shaders, 0 slow Presents.
+The barrier is off in netplay.
+
+**Earlier (2026-10-21): stutter root cause and fix.** See
 [docs/NATIVE_DRIVER_CACHE.md](docs/NATIVE_DRIVER_CACHE.md). The remaining match freezes were
 the AMD driver compiling each shader's Vulkan pipeline library at its first draw: 20-850 ms
 cold, under 5 ms once in the driver's disk cache, which is keyed by the executable's path.

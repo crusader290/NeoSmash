@@ -14,6 +14,10 @@ echo Preparing whole-game shaders. Archive scanning can take several minutes.
 %PY% -u tools\prepare_effects.py --tree "%SSBU_TREE%" --whole-game %*
 set "SSBU_PREPARE_RESULT=%ERRORLEVEL%"
 if not "%SSBU_PREPARE_RESULT%"=="0" goto finish
+rem The index of which shaders each container holds (the game prepares a container as it loads it).
+%PY% -u tools\container_index.py
+set "SSBU_PREPARE_RESULT=%ERRORLEVEL%"
+if not "%SSBU_PREPARE_RESULT%"=="0" goto finish
 rem Then the GPU driver's own cache for build\ssbu.exe under DXVK (first-use freezes).
 if not exist "build\ssbu.exe" goto warmed
 if not exist "build\d3d11.dll" goto warmed

@@ -164,12 +164,14 @@ static int rom_lookup(const char *path, u32 *dir, u32 *file) {
 
 /* ---- mounts and handles ---------------------------------------------------------- */
 typedef enum { M_ROM = 1, M_HOST } MountKind;
+void gfx_arc_read(u64 offset, u64 size);   /* gpu_container_prep.h: prepares the shaders of what the game loads */
 static struct Mount { char name[32]; MountKind kind; char root[512]; } mounts[16];
 
 typedef struct Handle {
     int used, kind, mode;
     HANDLE host;              /* host file */
     u64 offset, size;         /* rom file: data offset in the RomFS image and length */
+    int arc;                  /* the RomFS's data.arc: its reads are reported to the renderer */
     char **names; u8 *types; u64 *sizes; i64 count, next;   /* directory listing */
 } Handle;
 static Handle handles[512];
@@ -318,6 +320,8 @@ HLE(_ZN2nn2fs8OpenFileEPNS0_10FileHandleEPKci) {
         if (mode & OPEN_WRITE) { c->x[0] = R_UNSUPPORTED; return; }
         h.offset = rom.data + rom_file(f)->offset;
         h.size = rom_file(f)->size;
+        size_t len = strlen(rest);
+        h.arc = len >= 8 && !_stricmp(rest + len - 8, "data.arc");
     } else {
         char path[1024];
         host_path(path, sizeof path, m, rest);
@@ -344,6 +348,7 @@ static u64 read_at(Handle *h, i64 offset, void *buf, u64 size) {
     if (offset < 0 || (u64)offset > total) return ~0ull;
     if (size > total - (u64)offset) size = total - (u64)offset;
     if (!size) return 0;
+    if (h->arc) gfx_arc_read((u64)offset, size);
     int ok = h->host ? pread_all(h->host, (u64)offset, buf, size) : rom_read(h->offset + (u64)offset, buf, size);
     return ok ? size : ~0ull;
 }

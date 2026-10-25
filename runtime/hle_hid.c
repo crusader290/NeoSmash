@@ -33,6 +33,8 @@ static int pad_connected(u32 id) {
 static const char *const BUTTON_NAMES[] = {"A", "B", "X", "Y", "LSTICK", "RSTICK", "L", "R", "ZL", "ZR", "PLUS", "MINUS",
                                            "LEFT", "UP", "RIGHT", "DOWN"};
 
+u64 gfx_held_ns(void);   /* gpu_container_prep.h: time the loading barrier has held frames */
+
 /* SSBU_INPUT="<seconds>:<button>[/<hold seconds>],...": press each button at that time, for a
  * quarter second unless a hold is given (for automated runs). SLEFT, SUP, SRIGHT and SDOWN
  * push the left stick. */
@@ -66,7 +68,9 @@ static u64 scripted_buttons(i32 *lx, i32 *ly) {
         script_relative = getenv("SSBU_INPUT_RELATIVE") && atoi(getenv("SSBU_INPUT_RELATIVE"));
         script_origin = current_time;
     }
-    double now = (current_time - (script_relative ? script_origin : 0)) / 1e9;
+    /* (with SSBU_INPUT_RELATIVE, the time the loading barrier held frames does not count either:
+     * a script's menu inputs land on the screens they were written for, however long loading took) */
+    double now = (current_time - (script_relative ? script_origin + gfx_held_ns() : 0)) / 1e9;
     u64 buttons = 0;
     for (int i = 0; i < count; i++) {
         if (now < presses[i].at || now >= presses[i].at + presses[i].hold) continue;

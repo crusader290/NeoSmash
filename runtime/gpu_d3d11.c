@@ -396,6 +396,9 @@ static const char BLIT_HLSL[] =
 static void start_compilers(void);                 /* (see "shaders") */
 static DWORD WINAPI prewarm_main(void *unused);
 static void prewarm_profile(void);
+static const char *default_manifest;   /* the start-up list when the launcher names none */
+static const char *cache_dir(void);
+static void prep_start(void);           /* gpu_container_prep.h */
 
 /* Direct3D 11 is DXVK's: always on Linux; on Windows when d3d11.dll is not the system's (the
  * DXVK test builds of tools/linux/wintest.py). */
@@ -521,14 +524,24 @@ static BOOL CALLBACK init(PINIT_ONCE o, PVOID p, PVOID *c) {
     }
     start_compilers();
     /* The prewarm is for a driver that compiles a shader when it is created (NVIDIA's Direct3D:
-     * 190 ms at first use). DXVK queues a Vulkan pipeline library per shader on its own workers
-     * instead: the whole cache at once kept them busy for minutes and the first frame waited
-     * behind them (5,948 shaders: 600 CPU-seconds, no frame for over 30 s). So under DXVK it is
-     * off unless SSBU_SHADER_PREWARM=1. */
+     * 190 ms at first use); a native driver gets it in the background. Under DXVK it is the
+     * start-up preparation, on by default: the shaders the game has used and those of recently
+     * played fighters (dump/effect_profiles/startup-selected, made by tools/play_setup.bat) are
+     * made before the first frame - seconds once the driver's cache is warm (tools/
+     * warm_native_cache.py) - and from then on each container the game reads is prepared as it
+     * reads it (gpu_container_prep.h). SSBU_SHADER_PREWARM=0 turns both off; SSBU_EFFECT_MANIFEST
+     * names another list. */
     const char *prewarm = getenv("SSBU_SHADER_PREWARM");
-    if (getenv("SSBU_EFFECT_MANIFEST")) prewarm_profile();
-    else if (prewarm ? atoi(prewarm) != 0 : !on_dxvk()) CloseHandle(CreateThread(NULL, 0, prewarm_main, NULL, 0, NULL));
-    else if (!prewarm) fprintf(stderr, "[gfx] prewarm: off under DXVK (SSBU_SHADER_PREWARM=1 turns it on)\n");
+    int prewarm_on = !prewarm || atoi(prewarm);
+    if (on_dxvk() && prewarm_on && !getenv("SSBU_EFFECT_MANIFEST")) {
+        static char selected[1200];
+        snprintf(selected, sizeof selected, "%s/../effect_profiles/startup-selected/shaders.txt", cache_dir());
+        if (GetFileAttributesA(selected) != INVALID_FILE_ATTRIBUTES) default_manifest = selected;
+    }
+    if (!prewarm_on) fprintf(stderr, "[gfx] prewarm: off (SSBU_SHADER_PREWARM=0)\n");
+    else if (on_dxvk() || getenv("SSBU_EFFECT_MANIFEST")) prewarm_profile();   /* (the start-up gate; with no list: the shaders the game has used) */
+    else CloseHandle(CreateThread(NULL, 0, prewarm_main, NULL, 0, NULL));
+    if (on_dxvk() && prewarm_on) prep_start();
     ready = 1;
     fprintf(stderr, "[gfx] Direct3D 11 ready%s\n", compile_dev ? " (shaders compile on a device of their own first)" : "");
     return TRUE;
@@ -942,7 +955,7 @@ static DWORD WINAPI prewarm_main(void *unused) {
     SetThreadDescription(GetCurrentThread(), L"shader prewarm");
     Found *found = NULL;
     u32 n = 0, cap = 0;
-    const char *manifest = getenv("SSBU_EFFECT_MANIFEST");
+    const char *manifest = getenv("SSBU_EFFECT_MANIFEST") ? getenv("SSBU_EFFECT_MANIFEST") : default_manifest;
     if (manifest) {
         FILE *file = fopen(manifest, "r");
         if (!file) rt_fatal("cannot open effect shader manifest: %s", manifest);
@@ -1028,6 +1041,8 @@ static DWORD WINAPI prewarm_main(void *unused) {
 #include "gpu_prewarm_driver.h"
 #include "gpu_prewarm_compute.h"
 #include "gpu_native_warm.h"
+extern u64 gfx_stat_dispatched;
+#include "gpu_container_prep.h"
 
 /* Opt-in startup gate. Hold the created objects until their actual game use. */
 static void prewarm_profile(void) {
@@ -3845,6 +3860,7 @@ void gfx_present(u64 guest, u32 width, u32 height) {
             if (prewarm_profile_active)
                 fprintf(stderr, "[stats] effect profile: %llu new shader objects reused, %llu requests without a prepared object (cumulative)\n",
                         prewarm_profile_hits, prewarm_profile_misses);
+            prep_report();
         }
         last_ns = now; last_presented = gfx_stat_presented; last_drawn = gfx_stat_drawn;
         last_dispatched = gfx_stat_dispatched; last_skipped = gfx_stat_skipped; last_watch = gfx_stat_watch_us;
@@ -3858,6 +3874,7 @@ void gfx_present(u64 guest, u32 width, u32 height) {
     ID3D11Texture2D_Release(back);
     gpu_timer_frame();
     gpu_times_frame();
+    prep_barrier();   /* (a loading screen waits for the shaders of what it loaded: gpu_container_prep.h) */
     LARGE_INTEGER p0, p1;
     QueryPerformanceCounter(&p0);
     HRESULT presented = IDXGISwapChain1_Present(swapchain, 0, display_present_flags());   /* (blocks while the GPU is frames behind) */

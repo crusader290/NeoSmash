@@ -18,6 +18,10 @@ call tools\find_python.bat || exit /b 1
 if not "%SSBU_NATIVE_WARM%"=="0" (
     %PY% -u tools\warm_native_cache.py || exit /b 1
 )
+rem Which shaders each of the game's containers holds: the game then prepares a container's shaders
+rem in the background as it loads it, and holds the loading screen until they are ready (instant
+rem when up to date; without a whole-game list the game just goes without it).
+%PY% -u tools\container_index.py
 set "SSBU_EFFECT_MANIFEST=%~dp0..\dump\effect_profiles\startup-selected\shaders.txt"
 set "SSBU_EFFECT_WAIT_SECONDS=600"
 set "SSBU_SHADER_CACHE=%~dp0..\dump\shadercache"
